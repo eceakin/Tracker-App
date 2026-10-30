@@ -1,4 +1,4 @@
-package com.example.namaztakibiapp.ui.theme
+package com.eceakin.namaztakibi.ui.theme
 
 import android.app.Activity
 import android.os.Build

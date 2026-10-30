@@ -1,4 +1,4 @@
-package com.example.namaztakibiapp
+package com.eceakin.namaztakibi
 
 import org.junit.Test
 

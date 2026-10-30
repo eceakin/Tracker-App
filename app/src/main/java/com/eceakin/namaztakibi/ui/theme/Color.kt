@@ -1,4 +1,4 @@
-package com.example.namaztakibiapp.ui.theme
+package com.eceakin.namaztakibi.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
