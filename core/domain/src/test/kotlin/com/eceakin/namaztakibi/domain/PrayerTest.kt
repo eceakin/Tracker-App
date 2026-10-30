@@ -14,9 +14,9 @@ class PrayerTest {
                 Prayer.IKINDI,
                 Prayer.AKSAM,
                 Prayer.YATSI,
-                Prayer.VITIR,
+                Prayer.VITIR
             ),
-            Prayer.entries,
+            Prayer.entries
         )
     }
 
@@ -28,9 +28,9 @@ class PrayerTest {
                 Prayer.OGLE,
                 Prayer.IKINDI,
                 Prayer.AKSAM,
-                Prayer.YATSI,
+                Prayer.YATSI
             ),
-            Prayer.entries.filter { it.isFarz },
+            Prayer.entries.filter { it.isFarz }
         )
         assertFalse(Prayer.VITIR.isFarz)
     }

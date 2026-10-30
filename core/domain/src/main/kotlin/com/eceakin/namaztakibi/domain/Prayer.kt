@@ -11,5 +11,5 @@ enum class Prayer(val isFarz: Boolean) {
     IKINDI(true),
     AKSAM(true),
     YATSI(true),
-    VITIR(false),
+    VITIR(false)
 }
