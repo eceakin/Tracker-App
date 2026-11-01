@@ -3,6 +3,11 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+// K-01 — build-logic de aynı motor sürümüyle denetlenir.
+configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+    version.set(libs.versions.ktlintEngine.get())
+}
+
 // Eklenti sürümleri ana projedekiyle aynı olsun diye catalog'dan gelir. compileOnly
 // kullanılıyor: ana projenin kök `plugins { ... apply false }` blokları bu eklentileri
 // derleme sınıf yoluna zaten getiriyor; implementation çakışma riski doğurur.

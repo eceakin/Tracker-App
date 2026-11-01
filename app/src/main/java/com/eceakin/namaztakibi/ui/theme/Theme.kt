@@ -46,6 +46,7 @@ fun NamazTakibiAppTheme(
         }
 
         darkTheme -> DarkColorScheme
+
         else -> LightColorScheme
     }
 
