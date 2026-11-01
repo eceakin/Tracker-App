@@ -19,6 +19,9 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                     sourceCompatibility = ProjectConfig.JAVA_VERSION
                     targetCompatibility = ProjectConfig.JAVA_VERSION
                 }
+                lint.apply {
+                    xmlReport = true
+                }
             }
         }
     }
