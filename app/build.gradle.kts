@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.namaztakibi.android.application)
+    alias(libs.plugins.namaztakibi.android.hilt)
     alias(libs.plugins.kotlin.compose)
 }
 

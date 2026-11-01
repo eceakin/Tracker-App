@@ -15,6 +15,8 @@ dependencies {
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.compose.gradlePlugin)
+    compileOnly(libs.hilt.gradlePlugin)
+    compileOnly(libs.ksp.gradlePlugin)
 }
 
 gradlePlugin {
@@ -34,6 +36,10 @@ gradlePlugin {
         register("androidApplication") {
             id = "namaztakibi.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
+        }
+        register("androidHilt") {
+            id = "namaztakibi.android.hilt"
+            implementationClass = "AndroidHiltConventionPlugin"
         }
     }
 }
