@@ -1,20 +1,13 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.namaztakibi.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.eceakin.namaztakibi"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
 
     defaultConfig {
         applicationId = "com.eceakin.namaztakibi"
-        minSdk = 26
-        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -30,17 +23,22 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
+    implementation(project(":core:data"))
     implementation(project(":core:domain"))
+    implementation(project(":core:prayertimes"))
+    implementation(project(":feature:calendar"))
+    implementation(project(":feature:kaza"))
+    implementation(project(":feature:mazeret"))
+    implementation(project(":feature:onboarding"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:today"))
+    implementation(project(":widget"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
