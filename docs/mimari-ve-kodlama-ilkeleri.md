@@ -1,6 +1,6 @@
 # Mimari ve Kodlama İlkeleri — Namaz Takibi
 
-29 Ekim 2026 · @ece · Sürüm 1.1 (30 Ekim 2026: linter ktlint olarak seçildi)
+29 Ekim 2026 · @ece · Sürüm 1.2 (1 Kasım 2026: convention plugin'ler ve bağımlılık denetimi)
 
 ## Amaç ve kullanım
 
@@ -27,6 +27,27 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 - **M-04 — Feature modülleri birbirine bağlanmaz.** Ekranlar arası geçiş yalnızca `:app`'teki navigasyonla olur. Feature modülleri veriye repository arayüzü üzerinden erişir, `:core:data`'ya doğrudan bağlanmaz.
 - **M-05 — Vakit kaynağı değiştirilebilir.** Diyanet ve Adhan, domain'deki tek bir arayüzün arkasındadır; kaynak değişirse yalnızca `:core:prayertimes` etkilenir.
 - **M-06 — Bilinçli fark:** Google'ın rehberinde domain katmanı isteğe bağlıdır ve data'ya bağlı olabilir. Bu projede domain merkezdedir, çünkü kalp fıkhi kural motorudur ve karar tablosu Android olmadan test edilmelidir.
+- **M-07 — Derleme yapılandırması convention plugin'lerdedir.** Ortak Gradle ayarları (SDK seviyeleri, JVM hedefi, Compose, test altyapısı) `build-logic/` adlı ayrı bir Gradle derlemesindeki convention plugin'lerde tek yerde tanımlanır. Modül build dosyaları yalnızca bir convention plugin uygular ve kendine özgü bağımlılıklarını yazar. Gerekçe: aynı Android yapılandırması dokuz modülde tekrar edecekti (P-04'teki "üçüncü tekrar" eşiğinin çok üstü); JVM hedefinin modüller arasında farklılaşması gibi sessiz hatalar böylece imkânsız hale gelir. Plugin'ler:
+
+  | Plugin | Uygulandığı modüller | Kapsadığı |
+  | --- | --- | --- |
+  | `namaztakibi.jvm.library` | `:core:domain` | Kotlin/JVM, JVM hedefi, JUnit 5 |
+  | `namaztakibi.android.library` | `:core:data`, `:core:prayertimes`, `:widget` | Android library, SDK seviyeleri, JVM hedefi |
+  | `namaztakibi.android.feature` | `:feature:*` | `android.library` + Compose + `:core:domain` bağımlılığı |
+  | `namaztakibi.android.application` | `:app` | Android application, SDK seviyeleri, JVM hedefi |
+
+- **M-08 — Bağımlılık kuralları derleme sırasında denetlenir.** M-01 ve M-04'teki kurallar yalnızca belgede kalmaz: kök Gradle derlemesindeki bir denetim, kurala aykırı her `project(...)` bağımlılığını yapılandırma aşamasında, kuralı ve modülleri adlandıran bir mesajla durdurur. İzin tablosu:
+
+  | Modül | İzin verilen proje bağımlılıkları |
+  | --- | --- |
+  | `:core:domain` | Yok |
+  | `:core:data`, `:core:prayertimes` | `:core:domain` |
+  | `:feature:*` | `:core:domain` |
+  | `:widget` | `:core:domain`, `:core:data` |
+  | `:app` | Hepsi |
+
+  Tabloya yeni bir modül ya da izin eklemek mimari bir karardır: önce bu belge, sonra denetim kodu değişir.
+- **M-09 — Modül adları.** Modül adları İngilizce yazılır; fıkhi terimler K-02'deki gibi kendi adlarını korur: `:feature:onboarding`, `:feature:today` (Bugün), `:feature:calendar` (Takvim/Geçmiş), `:feature:kaza`, `:feature:mazeret`, `:feature:settings` (Ayarlar). `namespace` modül yoluyla eşleşir: `com.eceakin.namaztakibi.feature.kaza`.
 
 ## 2. Sunum katmanı: MVVM + UDF (M)
 
@@ -77,7 +98,7 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 
 ## 7. Kodlama kuralları (K)
 
-- **K-01 — Stil:** Kotlin resmi stil kılavuzu. Linter **ktlint**'tir (30 Ekim 2026 kararı; gerekçe P-02: kurulumu ve kuralları daha basit). ktlint ve Android Lint CI'da zorunludur; uyarı sayısı sıfırda tutulur.
+- **K-01 — Stil:** Kotlin resmi stil kılavuzu. Linter **ktlint**'tir (30 Ekim 2026 kararı; gerekçe P-02: kurulumu ve kuralları daha basit). ktlint ve Android Lint CI'da zorunludur; uyarı sayısı sıfırda tutulur. ktlint kuralı kapatılmaz; tek istisna fonksiyon adı kuralıdır: `@Composable` fonksiyonlar büyük harfle başlar, `@Test` ve `@ParameterizedTest` fonksiyonları ise kimlik taşıyan adlar kullanır (`BR01_...`, `KT41_...`; K-13). Bu istisna `.editorconfig`'te tanımlıdır ve genişletilmez.
 - **K-02 — Adlandırma:** Kod İngilizce; fıkhi terimler domain'de kendi adlarıyla kalır (`Kaza`, `Mazeret`, `Vitir`), çevrilmeye zorlanmaz. Kullanıcıya görünen tüm metinler `strings.xml`'de, Türkçe.
 - **K-03 — Kotlin deyimleri:** Durumlar için `sealed interface`, kimlikler için `value class`, null yerine anlamlı tipler. `!!` kullanılmaz.
 - **K-04 — Fonksiyonlar küçük ve tek işlidir.** Uzun fonksiyon, bölünmesi gerektiğine işarettir.
@@ -98,7 +119,8 @@ PR'dan önce kontrol:
 
 - [ ] Composable içinde iş mantığı yok (M-12)
 - [ ] Domain'de Android tipi veya annotation yok (M-02)
-- [ ] Feature modülü başka bir feature'a veya `:core:data`'ya doğrudan bağlı değil (M-04)
+- [ ] Feature modülü başka bir feature'a veya `:core:data`'ya doğrudan bağlı değil (M-04; M-08 denetimi yeşil)
+- [ ] Modül build dosyasında SDK seviyesi, `compileOptions` ya da JVM hedefi tekrar yazılmamış; ortak ayar convention plugin'de (M-07)
 - [ ] Dışarıya değiştirilebilir akış açılmamış (M-10)
 - [ ] İş yapmayan use case veya gereksiz arayüz eklenmemiş (M-22, P-05)
 - [ ] Doğrudan saat çağrısı yok, `Clock` kullanılmış (M-23)
@@ -124,6 +146,8 @@ PR'dan önce kontrol:
 | Discriminated union / `record` | `sealed interface` / `data class` |
 | `.csproj` referansları | Gradle modül bağımlılıkları |
 | StyleCop / .editorconfig analizörleri | ktlint (+ `.editorconfig`) |
+| `Directory.Build.props` / `.targets` | `build-logic` convention plugin'leri (M-07) |
+| NetArchTest / ArchUnitNET kuralları | Modül bağımlılık denetimi (M-08) |
 
 ## Sürüm geçmişi
 
@@ -131,3 +155,4 @@ PR'dan önce kontrol:
 | --- | --- | --- |
 | 1.0 | 29 Ekim 2026 | İlk sürüm |
 | 1.1 | 30 Ekim 2026 | K-01: linter ktlint olarak seçildi; kontrol listesine ktlint maddesi ve eşleme tablosuna karşılığı eklendi; CLAUDE.md'ye atıf |
+| 1.2 | 1 Kasım 2026 | M-07 (convention plugin'ler), M-08 (derleme sırasında bağımlılık denetimi) ve M-09 (modül adları) eklendi. K-01'e test ve Compose fonksiyonları için ktlint adlandırma istisnası yazıldı. Kontrol listesi ve .NET eşleme tablosu güncellendi. Uygulama: görev kartı F1-02 |

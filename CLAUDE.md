@@ -2,7 +2,15 @@
 
 Bu dosya, bu depoda kod yazan yapay zekâ ajanı için bağlayıcı çalışma talimatıdır. Her oturumun başında baştan sona oku. Buradaki bir kuralla çelişen bir istek gelirse işe başlamadan önce çelişkiyi kullanıcıya bildir.
 
-Sürüm 1.1 · 30 Ekim 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.1)
+Sürüm 1.2 · 1 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.2)
+
+## 0. Oturum başında
+
+Claude Code yeni bir oturumda önceki sohbeti **hatırlamaz.** Nerede kaldığını sohbetten değil depodan öğren:
+
+1. `git status` ve `git log --oneline -10` çalıştır.
+2. `docs/tasks/` altındaki en yüksek numaralı görev kartını ve varsa onun `-rapor.md` dosyasını oku.
+3. Kullanıcı bir görev vermediyse durumu kısaca özetle ve bekle. Kendiliğinden iş başlatma.
 
 ---
 
@@ -44,6 +52,7 @@ Belgeler `docs/` altındadır. Hepsini her oturumda okuma; görevin gerektirdiğ
 ## 4. Mevcut durum
 
 - **Faz:** Faz 1 (mimari ve proje iskeleti). Faz 2 (kural motoru, TDD) bunun hemen ardından gelir.
+- **Faz 1 kartları:** F1-01 (paket adı, ktlint, `:core:domain`) tamamlandı. Sırada F1-02 (modüller, convention plugin'ler, depo hijyeni), F1-03 (Hilt ve CI) ve F1-04 (widget ve hatırlatma risk prototipi) var.
 - **Diyanet API'si:** Başvuru yapıldı, yanıt bekleniyor. Vakit kaynağı bir arayüzün arkasında olduğu için iş beklemez. Gerçek Diyanet istemcisi yazma; sahte (fake) uygulama kullan.
 - **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme.
 
@@ -55,24 +64,27 @@ Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, Data
 - **Bu listede olmayan hiçbir kütüphaneyi sormadan ekleme** (P-03). Özellikle şunlar yasaktır: analitik, reklam, çökme raporlama SDK'sı, MVI kütüphanesi (Orbit, Mavericks), mock kütüphanesi (önce fake yaz, K-14), RxJava, Gson, Moshi.
 - Kütüphane sürümünü hafızandan uydurma. Emin değilsen kullanıcıya sor.
 - **Linter:** ktlint (karar: 30 Ekim 2026). detekt ekleme.
-- **Açık karar (kullanıcıya sorulmadan seçilmez):** uygulama paket adı (`applicationId` ve `namespace`). Android Studio şablonunun verdiği `com.example...` geçici bir addır.
+- **Paket adı:** `com.eceakin.namaztakibi` (karar: 30 Ekim 2026). Her modülün `namespace`'i bunun altındadır, örneğin `com.eceakin.namaztakibi.feature.kaza`. `applicationId` asla değiştirilmez.
+- **AGP 9 yerleşik Kotlin:** Android modüllerine `org.jetbrains.kotlin.android` eklentisini **uygulama**; AGP 9'da Kotlin derlemesi yerleşiktir ve bu eklenti yeni DSL ile uyumsuzdur. `kapt` da kullanılmaz; gerektiğinde KSP kullanılır.
 
 ## 6. Modül yapısı ve bağımlılık kuralları
 
-| Modül | Tür | İçerik | Bağımlı olabileceği modüller |
+| Modül | Tür (convention plugin) | İçerik | Bağımlı olabileceği modüller |
 | --- | --- | --- | --- |
-| `:core:domain` | **Saf Kotlin/JVM** (Android modülü değil) | Varlıklar, `RuleSet`, kural motoru, repository ve vakit kaynağı arayüzleri, use case'ler | Hiçbiri |
-| `:core:data` | Android library | Room (ana ve hassas veritabanı), DataStore, repository uygulamaları, yedekleme | `:core:domain` |
-| `:core:prayertimes` | Android library | Ara sunucu istemcisi, vakit önbelleği, Adhan yedeği | `:core:domain` |
-| `:feature:*` | Android library | onboarding, bugün, takvim, kaza, mazeret, ayarlar (Compose + ViewModel) | Yalnızca `:core:domain` |
-| `:widget` | Android library | Glance widget'ları | `:core:domain`, `:core:data` |
-| `:app` | Android application | Hilt kurulumu, navigasyon, bildirim ve alarm altyapısı | Hepsi |
+| `:core:domain` | **Saf Kotlin/JVM** (`namaztakibi.jvm.library`) | Varlıklar, `RuleSet`, kural motoru, repository ve vakit kaynağı arayüzleri, use case'ler | Hiçbiri |
+| `:core:data` | Android library (`namaztakibi.android.library`) | Room (ana ve hassas veritabanı), DataStore, repository uygulamaları, yedekleme | `:core:domain` |
+| `:core:prayertimes` | Android library (`namaztakibi.android.library`) | Ara sunucu istemcisi, vakit önbelleği, Adhan yedeği | `:core:domain` |
+| `:feature:onboarding`, `:feature:today`, `:feature:calendar`, `:feature:kaza`, `:feature:mazeret`, `:feature:settings` | Android library + Compose (`namaztakibi.android.feature`) | Onboarding, Bugün, Takvim/Geçmiş, Kaza, Mazeret, Ayarlar ekranları (Compose + ViewModel) | Yalnızca `:core:domain` |
+| `:widget` | Android library (`namaztakibi.android.library`) | Glance widget'ları | `:core:domain`, `:core:data` |
+| `:app` | Android application (`namaztakibi.android.application`) | Hilt kurulumu, navigasyon, bildirim ve alarm altyapısı | Hepsi |
 
 Kesin kurallar:
 
 - `:core:domain` içinde `android.*` import'u, `Context`, `LiveData`, Room ya da Hilt anotasyonu **olamaz** (M-02). `javax.inject.Inject` saf Java olduğu için kullanılabilir.
 - Feature modülleri birbirine ve `:core:data`'ya bağlanamaz (M-04). Ekranlar arası geçiş yalnızca `:app`'teki navigasyonla olur.
 - Repository ve vakit kaynağı **arayüzleri** domain'de, **uygulamaları** data ve prayertimes'tadır (M-03, M-05).
+- **Derleme yapılandırması `build-logic/` altındaki convention plugin'lerdedir (M-07).** Bir modülün build dosyasına `compileSdk`, `minSdk`, `targetSdk`, `compileOptions` ya da JVM hedefi yazma; bunlar convention plugin'den gelir. Yeni modül yalnızca uygun convention plugin'le açılır.
+- **Bağımlılık kuralları derleme sırasında denetlenir (M-08).** Yukarıdaki tabloyu ihlal eden bir `project(...)` bağımlılığı derlemeyi durdurur. Denetimi kapatma ya da gevşetme; kural değişikliği gerekiyorsa **dur ve sor.**
 
 ## 7. Kodlama kuralları (en sık ihlal edilenler)
 
@@ -117,7 +129,7 @@ Tam liste `docs/mimari-ve-kodlama-ilkeleri.md`'de. Aşağıdakiler pazarlıksız
 ## 8. Test kuralları
 
 - **Domain'de TDD:** Önce test, sonra kod (K-11). Karar tablosunun her satırı parametreli bir testtir.
-- **Test adı kimlik taşır:** `KT41_BR12_hayiz127SaatteBitti_kalan60dk_ikindiAcilir`, `KS_TRK_02_...`, `BR12_...` (SRS Bölüm 8).
+- **Test adı kimlik taşır:** `KT41_BR12_hayiz127SaatteBitti_kalan60dk_ikindiAcilir`, `KS_TRK_02_...`, `BR12_...` (SRS Bölüm 8). Bu adlar büyük harfle başladığı için `.editorconfig`, ktlint'in fonksiyon adı kuralını yalnızca `@Test` ve `@ParameterizedTest` (ve Compose için `@Composable`) fonksiyonlarında atlar. Bu istisnayı genişletme.
 - **Sabit referans gün:** Domain testleri karar tablosundaki fikstürü kullanır. Imsak 05:30, güneş 07:00, öğle 12:30, ikindi 15:30, akşam 18:00, yatsı 19:30, Europe/Istanbul. Testler gerçek tarihe ya da cihaz saatine bağlı olamaz.
 - **Sınırlar ve değişmezler:** Tam 72. ve 240. saat, vaktin son dakikası, yaz saati geçişi; "borç asla negatif olmaz" gibi değişmezler (K-12).
 - **Fake tercih edilir:** Repository'ler için bellek içi fake yaz (K-14).
@@ -145,7 +157,9 @@ Bu uygulamada fıkhi bir hata, kullanıcının ibadetini etkiler. Bu yüzden:
 - Derleme: `.\gradlew.bat assembleDebug`
 - Domain testleri: `.\gradlew.bat :core:domain:test`
 - Tüm birim testleri: `.\gradlew.bat test`
-- Lint: `.\gradlew.bat lint ktlintCheck` (ktlint kurulduktan sonra; otomatik düzeltme `ktlintFormat`)
+- Stil: `.\gradlew.bat ktlintCheck` (`build-logic` dahil her şeyi kontrol eder; otomatik düzeltme `ktlintFormat`)
+- Android Lint: `.\gradlew.bat lintDebug`
+- Modül ağacı: `.\gradlew.bat projects`
 
 **Bir görevin bitti tanımı**
 1. Görev kartındaki kabul kriterlerinin hepsi karşılanmış.
@@ -156,6 +170,10 @@ Bu uygulamada fıkhi bir hata, kullanıcının ibadetini etkiler. Bu yüzden:
 ## 11. Görev sonu raporu
 
 Her görevin sonunda şu biçimde kısa bir rapor yaz. Rapor, gözden geçirmede kullanılır.
+
+- Raporu `docs/tasks/<KART-KİMLİĞİ>-rapor.md` dosyasına yaz (örneğin `docs/tasks/F1-02-rapor.md`) ve dalın **son commit'i** olarak ekle: `docs(tasks): add <KART-KİMLİĞİ> report`. Sohbette yalnızca kısa bir özet ver.
+- Raporu yalnızca sohbette bırakma: yeni bir oturum ve gözden geçiren kişi raporu depodan okur.
+- Komut çıktılarını raporda **özetle** (sonuç, test sayısı, uyarı sayısı). Uzun log yapıştırma.
 
 ```
 ## Rapor: <görev kartı adı>
