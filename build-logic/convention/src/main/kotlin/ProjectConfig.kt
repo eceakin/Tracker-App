@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // M-07 — SDK ve JVM değerlerinin tek kaynağı. Modül build dosyaları bu değerleri yazmaz.
 object ProjectConfig {
-    const val COMPILE_SDK = 36
+    const val COMPILE_SDK = 37
     const val COMPILE_SDK_MINOR = 1
     const val MIN_SDK = 26
-    const val TARGET_SDK = 36
+    const val TARGET_SDK = 37
     val JAVA_VERSION: JavaVersion = JavaVersion.VERSION_11
     val JVM_TARGET: JvmTarget = JvmTarget.JVM_11
 }
