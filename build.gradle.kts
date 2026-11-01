@@ -1,7 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+import javax.xml.parsers.DocumentBuilderFactory
 import org.gradle.api.artifacts.ProjectDependency
 import org.w3c.dom.Element
-import javax.xml.parsers.DocumentBuilderFactory
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -220,4 +220,25 @@ gradle.projectsEvaluated {
         .forEach { module ->
             checkLintWarnings.configure { dependsOn("${module.path}:lintDebug") }
         }
+}
+
+// CI'ın çalıştırdığı tek komut. Kök görevde `dependsOn("ktlintCheck")` yalnızca kökün
+// görevine bağlanır; bu yüzden her projenin görevine açıkça bağlanıyor.
+val ciCheck = tasks.register("ciCheck") {
+    group = "verification"
+    description =
+        "ktlint, birim testleri, Android Lint kapısı ve :app debug derlemesini çalıştırır."
+    dependsOn(checkLintWarnings)
+}
+
+gradle.projectsEvaluated {
+    allprojects.forEach { module ->
+        if (module.tasks.names.contains("ktlintCheck")) {
+            ciCheck.configure { dependsOn(module.tasks.named("ktlintCheck")) }
+        }
+        if (module != rootProject && module.tasks.names.contains("test")) {
+            ciCheck.configure { dependsOn(module.tasks.named("test")) }
+        }
+    }
+    ciCheck.configure { dependsOn(project(":app").tasks.named("assembleDebug")) }
 }
