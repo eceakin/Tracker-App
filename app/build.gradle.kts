@@ -29,7 +29,16 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:data"))
     implementation(project(":core:domain"))
+    implementation(project(":core:prayertimes"))
+    implementation(project(":feature:calendar"))
+    implementation(project(":feature:kaza"))
+    implementation(project(":feature:mazeret"))
+    implementation(project(":feature:onboarding"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:today"))
+    implementation(project(":widget"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
