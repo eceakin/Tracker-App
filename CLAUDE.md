@@ -2,7 +2,7 @@
 
 Bu dosya, bu depoda kod yazan yapay zekâ ajanı için bağlayıcı çalışma talimatıdır. Her oturumun başında baştan sona oku. Buradaki bir kuralla çelişen bir istek gelirse işe başlamadan önce çelişkiyi kullanıcıya bildir.
 
-Sürüm 1.2 · 1 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.2)
+Sürüm 1.3 · 1 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.3)
 
 ## 0. Oturum başında
 
@@ -52,19 +52,20 @@ Belgeler `docs/` altındadır. Hepsini her oturumda okuma; görevin gerektirdiğ
 ## 4. Mevcut durum
 
 - **Faz:** Faz 1 (mimari ve proje iskeleti). Faz 2 (kural motoru, TDD) bunun hemen ardından gelir.
-- **Faz 1 kartları:** F1-01 (paket adı, ktlint, `:core:domain`) tamamlandı. Sırada F1-02 (modüller, convention plugin'ler, depo hijyeni), F1-03 (Hilt ve CI) ve F1-04 (widget ve hatırlatma risk prototipi) var.
+- **Faz 1 kartları:** F1-01 (paket adı, ktlint, `:core:domain`) ve F1-02 (modüller, convention plugin'ler, depo hijyeni) tamamlandı. Sırada F1-03 (araç zinciri yükseltmesi), F1-04 (Hilt ve CI) ve F1-05 (widget ve hatırlatma risk prototipi) var.
 - **Diyanet API'si:** Başvuru yapıldı, yanıt bekleniyor. Vakit kaynağı bir arayüzün arkasında olduğu için iş beklemez. Gerçek Diyanet istemcisi yazma; sahte (fake) uygulama kullan.
 - **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme.
 
 ## 5. Teknoloji yığını
 
-Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, DataStore, WorkManager, Jetpack Glance, kotlinx.serialization, Adhan (yalnızca yedek vakit hesabı için). Testlerde JUnit 5 (domain), Robolectric ve Room test yardımcıları (data), Compose UI testleri (feature).
+Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, DataStore, WorkManager, Jetpack Glance, kotlinx.serialization, Adhan (yalnızca yedek vakit hesabı için). Testlerde JUnit Jupiter (JUnit 6; domain), Robolectric ve Room test yardımcıları (data), Compose UI testleri (feature).
 
 - Bağımlılıklar `gradle/libs.versions.toml` (version catalog) üzerinden eklenir. Sürüm numarası koda yazılmaz.
 - **Bu listede olmayan hiçbir kütüphaneyi sormadan ekleme** (P-03). Özellikle şunlar yasaktır: analitik, reklam, çökme raporlama SDK'sı, MVI kütüphanesi (Orbit, Mavericks), mock kütüphanesi (önce fake yaz, K-14), RxJava, Gson, Moshi.
 - Kütüphane sürümünü hafızandan uydurma. Emin değilsen kullanıcıya sor.
 - **Linter:** ktlint (karar: 30 Ekim 2026). detekt ekleme.
 - **Paket adı:** `com.eceakin.namaztakibi` (karar: 30 Ekim 2026). Her modülün `namespace`'i bunun altındadır, örneğin `com.eceakin.namaztakibi.feature.kaza`. `applicationId` asla değiştirilmez.
+- **SDK ve JVM değerleri** yalnızca `build-logic/convention/src/main/kotlin/ProjectConfig.kt`'tedir (M-07). Bu değerleri değiştirmek bir planlama kararıdır; görev kartı istemedikçe dokunma.
 - **AGP 9 yerleşik Kotlin:** Android modüllerine `org.jetbrains.kotlin.android` eklentisini **uygulama**; AGP 9'da Kotlin derlemesi yerleşiktir ve bu eklenti yeni DSL ile uyumsuzdur. `kapt` da kullanılmaz; gerektiğinde KSP kullanılır.
 
 ## 6. Modül yapısı ve bağımlılık kuralları

@@ -1,6 +1,6 @@
 # Geliştirme Yol Haritası — Namaz & Kaza Takip
 
-26 Ekim 2026 · @ece · Son güncelleme: 1 Kasım 2026 (Faz 1 kart planı; F1-01 tamamlandı; convention plugin'ler ve bağımlılık denetimi)
+26 Ekim 2026 · @ece · Son güncelleme: 1 Kasım 2026 (F1-02 tamamlandı; araç zinciri yükseltmesi F1-03 olarak eklendi, sonraki kartlar kaydı)
 
 ## Özet
 
@@ -40,9 +40,10 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 | Kart | Kapsam | Durum |
 | --- | --- | --- |
 | F1-01 | Paket adı `com.eceakin.namaztakibi`, ktlint, saf Kotlin `:core:domain` ve ilk test (BR-01) | Tamamlandı (30 Ekim 2026) |
-| F1-02 | Depo hijyeni, kütüphane sürümleri, lint uyarıları, `build-logic` convention plugin'leri, boş modüller, bağımlılık denetimi, README | Hazır |
-| F1-03 | Hilt ve GitHub Actions CI | Bekliyor |
-| F1-04 | Risk prototipi: widget'tan işaretleme ve pencereli hatırlatma, Samsung ve Xiaomi'de deneme | Bekliyor |
+| F1-02 | Depo hijyeni, kütüphane sürümleri, lint uyarıları, `build-logic` convention plugin'leri, boş modüller, bağımlılık denetimi, README | Tamamlandı (1 Kasım 2026) |
+| F1-03 | Araç zinciri yükseltmesi: Gradle, AGP, Kotlin, compileSdk ve targetSdk 37, Java 17, JUnit 6, geri tutulan kütüphaneler; lint 0 uyarı | Hazır |
+| F1-04 | Hilt ve GitHub Actions CI; `main` dalının korunması | Bekliyor |
+| F1-05 | Risk prototipi: widget'tan işaretleme ve pencereli hatırlatma, Samsung ve Xiaomi'de deneme | Bekliyor |
 
 | Modül | İçerik | Bağımlılık kuralı |
 | --- | --- | --- |
@@ -56,10 +57,11 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 - [ ] **Teknoloji yığını:** Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, DataStore, WorkManager, Glance, kotlinx.serialization, Adhan (Java). Bağımlılıklar Gradle version catalog (`libs.versions.toml`) ile yönetilir. Kütüphaneler ihtiyaç duyulan fazda eklenir; Faz 1'de yalnızca Compose ve Hilt girer.
 - [x] **minSdk 26:** `java.time` ve hicrî takvim için gereken `HijrahDate` ek kütüphane olmadan kullanılabilir.
 - [x] **Paket adı:** `com.eceakin.namaztakibi` (F1-01). `com.example` Play Store'da kabul edilmez ve yayından sonra `applicationId` değiştirilemez.
-- [ ] **Modül yapısı:** Boş modüller, `build-logic` convention plugin'leri (mimari M-07) ve derleme sırasında bağımlılık denetimi (M-08). F1-02.
-- [ ] **Test araçları:** JUnit 5 (domain; F1-01'de kuruldu), Robolectric ve Room test yardımcıları (data; Faz 4), Compose UI testleri (feature; Faz 5).
-- [ ] **Kod kalitesi:** ktlint kuruldu (F1-01); kök betikler ve `build-logic` kapsamı ile Android Lint uyarılarının sıfırlanması F1-02.
-- [ ] **CI:** GitHub Actions'ta her push'ta derleme, birim testleri, ktlint ve Android Lint. F1-03.
+- [x] **Modül yapısı:** Boş modüller, `build-logic` convention plugin'leri (mimari M-07) ve derleme sırasında bağımlılık denetimi (M-08). F1-02.
+- [ ] **Araç zinciri:** Güncel AGP, Gradle ve Kotlin; compileSdk ve targetSdk 37 (Android 17); Java 17 hedefi. Yeni bir hedef SDK'nın davranış değişiklikleri ilgili özelliğin fazında (ör. alarmlar Faz 6) ayrıca değerlendirilir. F1-03.
+- [ ] **Test araçları:** JUnit Jupiter (domain; F1-01'de JUnit 5 ile kuruldu, F1-03'te JUnit 6), Robolectric ve Room test yardımcıları (data; Faz 4), Compose UI testleri (feature; Faz 5).
+- [ ] **Kod kalitesi:** ktlint kuruldu (F1-01), kök betikler ve `build-logic` kapsandı (F1-02). Android Lint 18 → 9 uyarıya indi (F1-02); kalan uyarılar sabit tutulan araç zincirinden geliyor ve F1-03'te sıfırlanır.
+- [ ] **CI:** GitHub Actions'ta her push'ta derleme, birim testleri, ktlint ve Android Lint. F1-04.
 - [ ] **Depo düzeni:** README, `CLAUDE.md`, `docs/` (proje belgelerinin kopyası, `docs/tasks/` görev kartları ve raporları) ve `main` + kısa ömürlü dal akışı (her iş ayrı dalda, Pull Request ile "Squash and merge"; CI kurulunca `main` için zorunlu durum kontrolü). `.idea/` depoda tutulmaz. Karar kayıtları (ADR, `docs/adr/`) yazılmaz; kararlar proje belgelerinde (karar tablosu, SRS, mimari ilkeler) durur. Bu, 29 Ekim 2026'da alınan bir karardır (SRS 1.0-taslak.9'da NFR-MNT-03 kaldırıldı). README ve `.idea/` düzenlemesi F1-02.
 - [ ] **Risk prototipi:** Faz 1'in sonunda bir günlük, atılabilir bir "widget'tan işaretle + pencereli hatırlatma" denemesi yap ve iki farklı üreticinin cihazında dene. Bu, projenin ana farkının teknik olarak mümkün olduğunu en baştan gösterir. Aynı prototipte widget'ın işleyen geri sayımı ve "ana ekrana ekle" penceresi de Xiaomi ve Samsung'da denenir (ekran taslakları Tur 5).
 

@@ -1,6 +1,6 @@
 # Mimari ve Kodlama İlkeleri — Namaz Takibi
 
-29 Ekim 2026 · @ece · Sürüm 1.2 (1 Kasım 2026: convention plugin'ler ve bağımlılık denetimi)
+29 Ekim 2026 · @ece · Sürüm 1.3 (1 Kasım 2026: Java 17 hedefi ve JUnit 6)
 
 ## Amaç ve kullanım
 
@@ -31,7 +31,7 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 
   | Plugin | Uygulandığı modüller | Kapsadığı |
   | --- | --- | --- |
-  | `namaztakibi.jvm.library` | `:core:domain` | Kotlin/JVM, JVM hedefi, JUnit 5 |
+  | `namaztakibi.jvm.library` | `:core:domain` | Kotlin/JVM, JVM hedefi, JUnit Jupiter |
   | `namaztakibi.android.library` | `:core:data`, `:core:prayertimes`, `:widget` | Android library, SDK seviyeleri, JVM hedefi |
   | `namaztakibi.android.feature` | `:feature:*` | `android.library` + Compose + `:core:domain` bağımlılığı |
   | `namaztakibi.android.application` | `:app` | Android application, SDK seviyeleri, JVM hedefi |
@@ -142,7 +142,7 @@ PR'dan önce kontrol:
 | `async/await`, `Task` | `suspend` fonksiyonlar, coroutine'ler |
 | `IAsyncEnumerable` / Rx `IObservable` | `Flow` / `StateFlow` |
 | MediatR handler | Use case sınıfı |
-| xUnit / NUnit | JUnit 5 |
+| xUnit / NUnit | JUnit Jupiter (JUnit 6) |
 | Discriminated union / `record` | `sealed interface` / `data class` |
 | `.csproj` referansları | Gradle modül bağımlılıkları |
 | StyleCop / .editorconfig analizörleri | ktlint (+ `.editorconfig`) |
@@ -156,3 +156,4 @@ PR'dan önce kontrol:
 | 1.0 | 29 Ekim 2026 | İlk sürüm |
 | 1.1 | 30 Ekim 2026 | K-01: linter ktlint olarak seçildi; kontrol listesine ktlint maddesi ve eşleme tablosuna karşılığı eklendi; CLAUDE.md'ye atıf |
 | 1.2 | 1 Kasım 2026 | M-07 (convention plugin'ler), M-08 (derleme sırasında bağımlılık denetimi) ve M-09 (modül adları) eklendi. K-01'e test ve Compose fonksiyonları için ktlint adlandırma istisnası yazıldı. Kontrol listesi ve .NET eşleme tablosu güncellendi. Uygulama: görev kartı F1-02 |
+| 1.3 | 1 Kasım 2026 | JVM hedefi Java 11'den 17'ye, test çatısı JUnit 5'ten 6'ya çıktı (JUnit 6 Java 17 ister). Kod ve test yazımı değişmez; değerler yalnızca `ProjectConfig` ve catalog'da. Uygulama: görev kartı F1-03 |
