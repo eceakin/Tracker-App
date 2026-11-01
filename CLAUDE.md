@@ -2,7 +2,7 @@
 
 Bu dosya, bu depoda kod yazan yapay zekâ ajanı için bağlayıcı çalışma talimatıdır. Her oturumun başında baştan sona oku. Buradaki bir kuralla çelişen bir istek gelirse işe başlamadan önce çelişkiyi kullanıcıya bildir.
 
-Sürüm 1.3 · 1 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.3)
+Sürüm 1.4 · 1 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.5)
 
 ## 0. Oturum başında
 
@@ -52,7 +52,7 @@ Belgeler `docs/` altındadır. Hepsini her oturumda okuma; görevin gerektirdiğ
 ## 4. Mevcut durum
 
 - **Faz:** Faz 1 (mimari ve proje iskeleti). Faz 2 (kural motoru, TDD) bunun hemen ardından gelir.
-- **Faz 1 kartları:** F1-01 (paket adı, ktlint, `:core:domain`) ve F1-02 (modüller, convention plugin'ler, depo hijyeni) tamamlandı. Sırada F1-03 (araç zinciri yükseltmesi), F1-04 (Hilt ve CI) ve F1-05 (widget ve hatırlatma risk prototipi) var.
+- **Faz 1 kartları:** F1-01 (paket adı, ktlint, `:core:domain`), F1-02 (modüller, convention plugin'ler, depo hijyeni) ve F1-03 (araç zinciri: AGP 9.5, Kotlin 2.4, API 37, Java 17, JUnit 6) tamamlandı. Sırada F1-04 (Hilt, CI ve `main` koruması) ve F1-05 (widget ve hatırlatma risk prototipi) var.
 - **Diyanet API'si:** Başvuru yapıldı, yanıt bekleniyor. Vakit kaynağı bir arayüzün arkasında olduğu için iş beklemez. Gerçek Diyanet istemcisi yazma; sahte (fake) uygulama kullan.
 - **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme.
 
@@ -65,6 +65,7 @@ Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, Data
 - Kütüphane sürümünü hafızandan uydurma. Emin değilsen kullanıcıya sor.
 - **Linter:** ktlint (karar: 30 Ekim 2026). detekt ekleme.
 - **Paket adı:** `com.eceakin.namaztakibi` (karar: 30 Ekim 2026). Her modülün `namespace`'i bunun altındadır, örneğin `com.eceakin.namaztakibi.feature.kaza`. `applicationId` asla değiştirilmez.
+- **Hilt** yalnızca KSP ile kullanılır (`kapt` yasak). Hilt'i bir modüle eklemenin tek yolu `namaztakibi.android.hilt` convention plugin'idir; modül build dosyasına Hilt ya da KSP eklentisini doğrudan yazma.
 - **SDK ve JVM değerleri** yalnızca `build-logic/convention/src/main/kotlin/ProjectConfig.kt`'tedir (M-07). Bu değerleri değiştirmek bir planlama kararıdır; görev kartı istemedikçe dokunma.
 - **AGP 9 yerleşik Kotlin:** Android modüllerine `org.jetbrains.kotlin.android` eklentisini **uygulama**; AGP 9'da Kotlin derlemesi yerleşiktir ve bu eklenti yeni DSL ile uyumsuzdur. `kapt` da kullanılmaz; gerektiğinde KSP kullanılır.
 
@@ -77,7 +78,7 @@ Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, Data
 | `:core:prayertimes` | Android library (`namaztakibi.android.library`) | Ara sunucu istemcisi, vakit önbelleği, Adhan yedeği | `:core:domain` |
 | `:feature:onboarding`, `:feature:today`, `:feature:calendar`, `:feature:kaza`, `:feature:mazeret`, `:feature:settings` | Android library + Compose (`namaztakibi.android.feature`) | Onboarding, Bugün, Takvim/Geçmiş, Kaza, Mazeret, Ayarlar ekranları (Compose + ViewModel) | Yalnızca `:core:domain` |
 | `:widget` | Android library (`namaztakibi.android.library`) | Glance widget'ları | `:core:domain`, `:core:data` |
-| `:app` | Android application (`namaztakibi.android.application`) | Hilt kurulumu, navigasyon, bildirim ve alarm altyapısı | Hepsi |
+| `:app` | Android application (`namaztakibi.android.application` + `namaztakibi.android.hilt`) | Hilt kurulumu, navigasyon, bildirim ve alarm altyapısı | Hepsi |
 
 Kesin kurallar:
 
@@ -161,12 +162,21 @@ Bu uygulamada fıkhi bir hata, kullanıcının ibadetini etkiler. Bu yüzden:
 - Stil: `.\gradlew.bat ktlintCheck` (`build-logic` dahil her şeyi kontrol eder; otomatik düzeltme `ktlintFormat`)
 - Android Lint: `.\gradlew.bat lintDebug`
 - Modül ağacı: `.\gradlew.bat projects`
+- **CI'ın çalıştırdığı tek komut:** `.\gradlew.bat ciCheck` (ktlint, birim testleri, Android Lint ve lint kapısı, derleme). PR açmadan önce bunu yerelde çalıştır; yerelde yeşilse CI'da da yeşil olmalı.
+- **Lint kapısı:** `ciCheck`, bilinen lint uyarıları listesinde (mimari K-01) olmayan **her** yeni uyarıda ve listede olup artık görünmeyen her uyarıda başarısız olur. Listeyi kendiliğinden değiştirme; değişiklik bir planlama kararıdır, **dur ve sor.**
 
 **Bir görevin bitti tanımı**
 1. Görev kartındaki kabul kriterlerinin hepsi karşılanmış.
 2. Derleme, ilgili testler ve lint yeşil. Bunu **gerçekten çalıştırarak** doğruladın; "çalışması gerekir" yeterli değil.
 3. Bölüm 7'deki kurallar ve mimari belgedeki Bölüm 9 kontrol listesi ihlal edilmemiş.
 4. Kapsam dışında hiçbir dosya değişmemiş. Fırsatçı refactor yapılmamış.
+
+**Plan dosyası**
+- Her kartın Adım 0 planını `docs/tasks/<KART-KİMLİĞİ>-plan.md` dosyasına da yaz. Kullanıcının onay mesajındaki değişiklikleri plana işle ve planı dalın **ilk commit'lerinden biri** olarak ekle: `docs(tasks): add <KART-KİMLİĞİ> plan`.
+- Yeni bir oturumda nerede kaldığını bu plan dosyasından ve git geçmişinden öğren; eski sohbet kayıtlarını (`~/.claude` altı) **okuma.**
+
+**`main` koruması**
+- `main` dalı GitHub'da korunur: doğrudan push yapılamaz, birleştirme yalnızca Pull Request ile ve CI yeşilken olur. Bu kuralı aşmaya çalışma.
 
 ## 11. Görev sonu raporu
 

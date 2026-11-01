@@ -1,6 +1,6 @@
 # Mimari ve Kodlama İlkeleri — Namaz Takibi
 
-29 Ekim 2026 · @ece · Sürüm 1.3 (1 Kasım 2026: Java 17 hedefi ve JUnit 6)
+29 Ekim 2026 · @ece · Sürüm 1.5 (1 Kasım 2026: sürüm güncelliği denetimleri lint kapısının dışında)
 
 ## Amaç ve kullanım
 
@@ -35,6 +35,7 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
   | `namaztakibi.android.library` | `:core:data`, `:core:prayertimes`, `:widget` | Android library, SDK seviyeleri, JVM hedefi |
   | `namaztakibi.android.feature` | `:feature:*` | `android.library` + Compose + `:core:domain` bağımlılığı |
   | `namaztakibi.android.application` | `:app` | Android application, SDK seviyeleri, JVM hedefi |
+  | `namaztakibi.android.hilt` | Faz 1'de yalnızca `:app` | KSP ve Hilt eklentileri, Hilt bağımlılıkları. `kapt` kullanılmaz |
 
 - **M-08 — Bağımlılık kuralları derleme sırasında denetlenir.** M-01 ve M-04'teki kurallar yalnızca belgede kalmaz: kök Gradle derlemesindeki bir denetim, kurala aykırı her `project(...)` bağımlılığını yapılandırma aşamasında, kuralı ve modülleri adlandıran bir mesajla durdurur. İzin tablosu:
 
@@ -98,7 +99,15 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 
 ## 7. Kodlama kuralları (K)
 
-- **K-01 — Stil:** Kotlin resmi stil kılavuzu. Linter **ktlint**'tir (30 Ekim 2026 kararı; gerekçe P-02: kurulumu ve kuralları daha basit). ktlint ve Android Lint CI'da zorunludur; uyarı sayısı sıfırda tutulur. ktlint kuralı kapatılmaz; tek istisna fonksiyon adı kuralıdır: `@Composable` fonksiyonlar büyük harfle başlar, `@Test` ve `@ParameterizedTest` fonksiyonları ise kimlik taşıyan adlar kullanır (`BR01_...`, `KT41_...`; K-13). Bu istisna `.editorconfig`'te tanımlıdır ve genişletilmez.
+- **K-01 — Stil:** Kotlin resmi stil kılavuzu. Linter **ktlint**'tir (30 Ekim 2026 kararı; gerekçe P-02: kurulumu ve kuralları daha basit). ktlint ve Android Lint CI'da zorunludur; ktlint'te hiç uyarı, Android Lint'te aşağıdaki bilinen uyarılar listesi dışında uyarı olmaz. ktlint kuralı kapatılmaz; tek istisna fonksiyon adı kuralıdır: `@Composable` fonksiyonlar büyük harfle başlar, `@Test` ve `@ParameterizedTest` fonksiyonları ise kimlik taşıyan adlar kullanır (`BR01_...`, `KT41_...`; K-13). Bu istisna `.editorconfig`'te tanımlıdır ve genişletilmez.
+
+  **Bilinen lint uyarıları.** Android Lint uyarıları gizlenmez (`lint.xml`, baseline, `@SuppressLint`, `tools:ignore`, `lint { disable(...) }` yasak). Bilinçli bir karardan ya da üçüncü taraf bir hatadan doğan uyarılar aşağıdaki listede tutulur. CI'daki lint kapısı (`ciCheck`) iki yönlü çalışır: listede olmayan **yeni** bir uyarıda ve listede olup artık **görünmeyen** bir uyarıda başarısız olur. Böylece liste her zaman gerçeği yansıtır. Listeyi değiştirmek bir planlama kararıdır: önce bu tablo, sonra kapının kodu değişir.
+
+  | Lint kimliği | Modüller | Neden | Ne zaman kalkar |
+  | --- | --- | --- | --- |
+  | `ObsoleteLintCustomCheck` | `:feature:calendar`, `:feature:kaza`, `:feature:mazeret`, `:feature:onboarding`, `:feature:settings`, `:feature:today` | `androidx.lifecycle` 2.11.0'ın lint kuralları AGP 9.5'in lint sürümüyle uyumsuz; `UnsafeLifecycleWhenUsage` ve `RepeatOnLifecycleWrongUsage` denetimleri çalışmıyor (F1-03) | Lifecycle ya da AGP'nin uyumsuzluğu gideren sürümüne geçildiğinde. Faz 5'te `repeatOnLifecycle` kullanılmaya başlanmadan önce yeniden kontrol edilir |
+
+  **Sürüm güncelliği denetimleri kapının dışındadır.** `GradleDependency`, `NewerVersionAvailable` ve `AndroidGradlePluginVersion` kodu değil, internetteki güncel sürüm listesini kontrol eder; sonuçları zamana ve ağa bağlıdır. Kapıya dahil edilseler, kodda hiçbir değişiklik yokken yeni bir kütüphane yayımlandığı gün CI kırmızıya dönerdi. Bu yüzden lint kapısı bu üç kimliği karşılaştırmaya almaz. Kapatılmazlar ve gizlenmezler; lint raporlarında görünmeye devam ederler. Sürüm güncelliği her fazın başında elle gözden geçirilir. Bilinçli sürüm kararları ilgili görev raporunda kayıtlıdır (ör. Gradle 9.6.1, F1-03).
 - **K-02 — Adlandırma:** Kod İngilizce; fıkhi terimler domain'de kendi adlarıyla kalır (`Kaza`, `Mazeret`, `Vitir`), çevrilmeye zorlanmaz. Kullanıcıya görünen tüm metinler `strings.xml`'de, Türkçe.
 - **K-03 — Kotlin deyimleri:** Durumlar için `sealed interface`, kimlikler için `value class`, null yerine anlamlı tipler. `!!` kullanılmaz.
 - **K-04 — Fonksiyonlar küçük ve tek işlidir.** Uzun fonksiyon, bölünmesi gerektiğine işarettir.
@@ -127,7 +136,7 @@ PR'dan önce kontrol:
 - [ ] `GlobalScope`, `!!`, sihirli sayı yok (P-12, K-03, K-06)
 - [ ] Yeni fıkhi davranış karar tablosuna/SRS'e bağlanmış ve testli (K-05, K-11)
 - [ ] P0 dışı özellik veya kütüphane eklenmemiş (P-03)
-- [ ] ktlint ve Android Lint temiz (K-01)
+- [ ] ktlint temiz; Android Lint'te bilinen uyarılar listesi dışında uyarı yok; `ciCheck` yeşil (K-01)
 
 ## 10. .NET → Android kavram eşlemesi
 
@@ -143,6 +152,8 @@ PR'dan önce kontrol:
 | `IAsyncEnumerable` / Rx `IObservable` | `Flow` / `StateFlow` |
 | MediatR handler | Use case sınıfı |
 | xUnit / NUnit | JUnit Jupiter (JUnit 6) |
+| Azure DevOps / GitHub Actions pipeline | GitHub Actions (`.github/workflows/ci.yml`, `ciCheck`) |
+| Branch policy (zorunlu build doğrulaması) | GitHub ruleset (`main` koruması, zorunlu CI kontrolü) |
 | Discriminated union / `record` | `sealed interface` / `data class` |
 | `.csproj` referansları | Gradle modül bağımlılıkları |
 | StyleCop / .editorconfig analizörleri | ktlint (+ `.editorconfig`) |
@@ -157,3 +168,5 @@ PR'dan önce kontrol:
 | 1.1 | 30 Ekim 2026 | K-01: linter ktlint olarak seçildi; kontrol listesine ktlint maddesi ve eşleme tablosuna karşılığı eklendi; CLAUDE.md'ye atıf |
 | 1.2 | 1 Kasım 2026 | M-07 (convention plugin'ler), M-08 (derleme sırasında bağımlılık denetimi) ve M-09 (modül adları) eklendi. K-01'e test ve Compose fonksiyonları için ktlint adlandırma istisnası yazıldı. Kontrol listesi ve .NET eşleme tablosu güncellendi. Uygulama: görev kartı F1-02 |
 | 1.3 | 1 Kasım 2026 | JVM hedefi Java 11'den 17'ye, test çatısı JUnit 5'ten 6'ya çıktı (JUnit 6 Java 17 ister). Kod ve test yazımı değişmez; değerler yalnızca `ProjectConfig` ve catalog'da. Uygulama: görev kartı F1-03 |
+| 1.5 | 1 Kasım 2026 | K-01: sürüm güncelliği denetimleri (`GradleDependency`, `NewerVersionAvailable`, `AndroidGradlePluginVersion`) zamana bağlı oldukları için lint kapısının dışına alındı; `AndroidGradlePluginVersion` bilinen uyarılar tablosundan çıktı. Gerekçe: F1-04 Adım 0'da bu uyarının çalıştırmadan çalıştırmaya görünüp kaybolduğu ölçüldü |
+| 1.4 | 1 Kasım 2026 | K-01'e bilinen lint uyarıları tablosu ve iki yönlü lint kapısı kuralı eklendi; "uyarı sayısı sıfır" hedefi "bilinen liste dışında uyarı yok" olarak netleşti. M-07 tablosuna `namaztakibi.android.hilt` eklendi. .NET eşlemesine CI ve dal koruması eklendi. Uygulama: görev kartı F1-04 |
