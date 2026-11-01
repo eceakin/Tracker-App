@@ -30,6 +30,7 @@ Windows:
 .\gradlew.bat test
 .\gradlew.bat ktlintCheck
 .\gradlew.bat lintDebug
+.\gradlew.bat ciCheck
 ```
 
 macOS / Linux:
@@ -39,7 +40,10 @@ macOS / Linux:
 ./gradlew test
 ./gradlew ktlintCheck
 ./gradlew lintDebug
+./gradlew ciCheck
 ```
+
+`ciCheck` tek komutta ktlint, birim testleri, Android Lint kapısı ve debug derlemesini çalıştırır. GitHub Actions CI'ı her Pull Request'te ve `main`'e yapılan her birleştirmede bu komutu çalıştırır; PR açmadan önce yerelde de aynı komut çalıştırılmalıdır.
 
 ## Belgeler
 
@@ -56,3 +60,5 @@ macOS / Linux:
 ## Çalışma akışı
 
 `main`'e doğrudan commit atılmaz. Her görev kısa ömürlü bir dalda (`feat/`, `fix/`, `test/`, `chore/`) yapılır, GitHub'da Pull Request ile ve "Squash and merge" yöntemiyle birleştirilir.
+
+`main` dalı GitHub ruleset'iyle korunur: doğrudan push yapılamaz ve birleştirme yalnızca Pull Request ile, CI yeşilken (zorunlu `ciCheck` durum kontrolü) mümkündür.
