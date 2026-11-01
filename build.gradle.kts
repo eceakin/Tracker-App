@@ -9,8 +9,14 @@ plugins {
     alias(libs.plugins.ktlint) apply false
 }
 
+// K-01 — motor sürümü eklenti sürümünden bağımsızdır; ikisi de catalog'dan gelir.
+val ktlintEngineVersion = libs.versions.ktlintEngine.get()
+
 allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+        version.set(ktlintEngineVersion)
+    }
 }
 
 // Included build'lerin görevleri kendiliğinden çalışmaz; build-logic'i de aynı komutla denetle.
