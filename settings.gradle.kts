@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Namaz Takibi App"
+rootProject.name = "NamazTakibi"
 include(":app")
 include(":core:domain")
