@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.namaztakibiapp"
+    namespace = "com.eceakin.namaztakibi"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.namaztakibiapp"
+        applicationId = "com.eceakin.namaztakibi"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:domain"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
