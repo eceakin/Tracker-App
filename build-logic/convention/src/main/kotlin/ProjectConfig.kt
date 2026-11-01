@@ -13,8 +13,8 @@ object ProjectConfig {
     const val COMPILE_SDK_MINOR = 1
     const val MIN_SDK = 26
     const val TARGET_SDK = 37
-    val JAVA_VERSION: JavaVersion = JavaVersion.VERSION_11
-    val JVM_TARGET: JvmTarget = JvmTarget.JVM_11
+    val JAVA_VERSION: JavaVersion = JavaVersion.VERSION_17
+    val JVM_TARGET: JvmTarget = JvmTarget.JVM_17
 }
 
 // K-06 — convention sınıfları `libs.` erişimini kullanamaz; catalog'a tek yerden bakılır.
