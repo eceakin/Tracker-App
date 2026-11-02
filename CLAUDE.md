@@ -2,7 +2,7 @@
 
 Bu dosya, bu depoda kod yazan yapay zekâ ajanı için bağlayıcı çalışma talimatıdır. Her oturumun başında baştan sona oku. Buradaki bir kuralla çelişen bir istek gelirse işe başlamadan önce çelişkiyi kullanıcıya bildir.
 
-Sürüm 1.4 · 1 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.5)
+Sürüm 1.6 · 2 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.6)
 
 ## 0. Oturum başında
 
@@ -51,17 +51,17 @@ Belgeler `docs/` altındadır. Hepsini her oturumda okuma; görevin gerektirdiğ
 
 ## 4. Mevcut durum
 
-- **Faz:** Faz 1 (mimari ve proje iskeleti). Faz 2 (kural motoru, TDD) bunun hemen ardından gelir.
-- **Faz 1 kartları:** F1-01 (paket adı, ktlint, `:core:domain`), F1-02 (modüller, convention plugin'ler, depo hijyeni) ve F1-03 (araç zinciri: AGP 9.5, Kotlin 2.4, API 37, Java 17, JUnit 6) tamamlandı. Sırada F1-04 (Hilt, CI ve `main` koruması) ve F1-05 (widget ve hatırlatma risk prototipi) var.
+- **Faz:** Faz 2 (domain modeli ve kural motoru, TDD). Kartlar F2-01 – F2-13; liste ve sıra `docs/gelistirme-yol-haritasi.md` Faz 2'de. Her kart karar tablosunun belirli satırlarını kapsar.
+- **Faz 1:** F1-01 – F1-04 tamamlandı. F1-05 (widget ve hatırlatma risk prototipi, spike) Faz 2 ile paralel yürür; spike kodu `main`'e girmez (Bölüm 10 "Spike kartları"). Faz 2 kartlarında spike dalındaki koda dokunma.
 - **Diyanet API'si:** Başvuru yapıldı, yanıt bekleniyor. Vakit kaynağı bir arayüzün arkasında olduğu için iş beklemez. Gerçek Diyanet istemcisi yazma; sahte (fake) uygulama kullan.
-- **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme.
+- **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme. Kural motoru metin değil tipli sonuç döndürür (Bölüm 7, M-25).
 
 ## 5. Teknoloji yığını
 
-Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, DataStore, WorkManager, Jetpack Glance, kotlinx.serialization, Adhan (yalnızca yedek vakit hesabı için). Testlerde JUnit Jupiter (JUnit 6; domain), Robolectric ve Room test yardımcıları (data), Compose UI testleri (feature).
+Kotlin, Jetpack Compose (Material 3), Navigation Compose, Hilt, Room + KSP, DataStore, WorkManager, Jetpack Glance, kotlinx.serialization, Adhan (yalnızca yedek vakit hesabı için). Testlerde JUnit Jupiter (JUnit 6; domain), Robolectric ve Room test yardımcıları (data), Compose UI testleri (feature). Kapsam ölçümü Gradle'ın yerleşik `jacoco` eklentisiyle yapılır (yalnızca `:core:domain`; mimari K-15).
 
 - Bağımlılıklar `gradle/libs.versions.toml` (version catalog) üzerinden eklenir. Sürüm numarası koda yazılmaz.
-- **Bu listede olmayan hiçbir kütüphaneyi sormadan ekleme** (P-03). Özellikle şunlar yasaktır: analitik, reklam, çökme raporlama SDK'sı, MVI kütüphanesi (Orbit, Mavericks), mock kütüphanesi (önce fake yaz, K-14), RxJava, Gson, Moshi.
+- **Bu listede olmayan hiçbir kütüphaneyi sormadan ekleme** (P-03). Özellikle şunlar yasaktır: analitik, reklam, çökme raporlama SDK'sı, MVI kütüphanesi (Orbit, Mavericks), mock kütüphanesi (önce fake yaz, K-14), RxJava, Gson, Moshi, Kover, AssertJ, Kotest ve özellik tabanlı test (property-based testing) kütüphaneleri.
 - Kütüphane sürümünü hafızandan uydurma. Emin değilsen kullanıcıya sor.
 - **Linter:** ktlint (karar: 30 Ekim 2026). detekt ekleme.
 - **Paket adı:** `com.eceakin.namaztakibi` (karar: 30 Ekim 2026). Her modülün `namespace`'i bunun altındadır, örneğin `com.eceakin.namaztakibi.feature.kaza`. `applicationId` asla değiştirilmez.
@@ -93,15 +93,17 @@ Kesin kurallar:
 Tam liste `docs/mimari-ve-kodlama-ilkeleri.md`'de. Aşağıdakiler pazarlıksızdır:
 
 **Zaman**
-- Domain'de `LocalDateTime.now()`, `Instant.now()`, `System.currentTimeMillis()` yasak. Zamana bağlı her fonksiyon `java.time.Clock` alır (M-23).
+- Domain'de `LocalDateTime.now()`, `Instant.now()`, `System.currentTimeMillis()` ve `ZoneId.systemDefault()` yasak. Zamana bağlı her fonksiyon `java.time.Clock` alır (M-23).
 - Anlar `Instant` + `ZoneId` ile tutulur. Hassasiyet dakikadır.
 - Aralıklar **başlangıç dahil, bitiş hariç**: `[başlangıç, bitiş)`.
 - **Namaz günü imsakta başlar.** Gece yarısından imsaka kadar önceki namaz günü geçerlidir.
 
 **Kural motoru**
 - Saf fonksiyonlardan oluşur, veri yazmaz, öneri döndürür (M-20, BR-00).
-- Fıkhi sayılar (72/240/960 saat, 15 gün, 45 dk kerahat, tertip sınırı 6, gusül 5–30, tekbir 1 dk, rekât süresi 2 dk vb.) yalnızca `RuleSet`'te durur (M-21, K-06).
+- Fıkhi sayılar (72/240/960 saat, 15 gün, 45 dk kerahat, tertip sınırı 6, gusül 5–30, tekbir 1 dk, rekât süresi ve sayıları, bulûğ yaşları vb.) yalnızca `RuleSet`'te durur (M-21, K-06). Ürünün tek kural seti `RuleSet.HANEFI`'dir.
 - Beklenen iş sonuçları (vakit girmedi, kerahat vakti, borç yok) istisna değil, `sealed` sonuç tipiyle döner (M-24).
+- **Motor sözleşmesi (M-25):** Her kural fonksiyonu ihtiyacı olan her şeyi parametre olarak alır: durum, olay, `Clock`, `RuleSet` ve o günün ayarları. Global, singleton ya da "şu anki ayar" okumaz; böylece her gün kendi ayarıyla değerlendirilir (BR-21).
+- **Metin değil tip:** Kural motoru kullanıcıya gösterilecek metin (Türkçe cümle) döndürmez. Bildirim, uyarı ve soru beklentileri tipli sonuçlardır (ör. `CanStillPray(prayer)`); testler metni değil tipi ve değerleri sınar. Metinler Faz 5'te `strings.xml`'e girer.
 
 **Veri**
 - Room tek doğruluk kaynağıdır (M-30).
@@ -120,7 +122,7 @@ Tam liste `docs/mimari-ve-kodlama-ilkeleri.md`'de. Aşağıdakiler pazarlıksız
 - İş yapmayan use case ya da tek uygulaması olan refleks arayüz açılmaz (M-22, P-05).
 
 **Adlandırma ve yorum**
-- Kod İngilizce yazılır. Fıkhi terimler kendi adıyla kalır: `Kaza`, `Mazeret`, `Vitir`, `Hayiz`, `Nifas`, `Istihaze`, `Kerahat`, `Tertip` (K-02).
+- Kod İngilizce yazılır. Fıkhi terimler kendi adıyla kalır: `Kaza`, `Mazeret`, `Vitir`, `Hayiz`, `Nifas`, `Istihaze`, `Kerahat`, `Tertip` (K-02). Vakit adları da kendi adıyla kalır: `imsak`, `gunes`, `ogle`, `ikindi`, `aksam`, `yatsi`.
 - Kullanıcıya görünen her metin `strings.xml`'de ve Türkçedir. Suçlayıcı dil kullanılmaz (NFR-USA-03, FR-HTR-05).
 - Fıkhi kural uygulayan her fonksiyonun yorumunda ilgili kimlik yazar, örneğin `// BR-12, KT-41 – KT-49` (K-05). Yorum "ne"yi değil "neden"i anlatır.
 
@@ -130,13 +132,18 @@ Tam liste `docs/mimari-ve-kodlama-ilkeleri.md`'de. Aşağıdakiler pazarlıksız
 
 ## 8. Test kuralları
 
-- **Domain'de TDD:** Önce test, sonra kod (K-11). Karar tablosunun her satırı parametreli bir testtir.
-- **Test adı kimlik taşır:** `KT41_BR12_hayiz127SaatteBitti_kalan60dk_ikindiAcilir`, `KS_TRK_02_...`, `BR12_...` (SRS Bölüm 8). Bu adlar büyük harfle başladığı için `.editorconfig`, ktlint'in fonksiyon adı kuralını yalnızca `@Test` ve `@ParameterizedTest` (ve Compose için `@Composable`) fonksiyonlarında atlar. Bu istisnayı genişletme.
-- **Sabit referans gün:** Domain testleri karar tablosundaki fikstürü kullanır. Imsak 05:30, güneş 07:00, öğle 12:30, ikindi 15:30, akşam 18:00, yatsı 19:30, Europe/Istanbul. Testler gerçek tarihe ya da cihaz saatine bağlı olamaz.
-- **Sınırlar ve değişmezler:** Tam 72. ve 240. saat, vaktin son dakikası, yaz saati geçişi; "borç asla negatif olmaz" gibi değişmezler (K-12).
+- **Domain'de TDD:** Önce test, sonra kod (K-11). Testi yaz, çalıştır, kırmızı (ya da derlenmeyen) olduğunu gör, sonra kodu yaz. Kırmızı aşamayı rapora bir satırla yaz.
+- **Karar tablosu satırları (K-11, K-16):** Her geçerli KT satırı en az bir testle sınanır. Test şu iki biçimden biriyle KT kimliğini taşır:
+  1. **Fonksiyon adı** KT kimliğiyle başlar: `fun KT41_BR12_hayiz127SaatteBitti_kalan60dk_ikindiAcilir()`. Kimlikteki rakamlar tablodaki gibi yazılır: `KT01_`, `KT41_`, `KT100_`.
+  2. **`@ParameterizedTest` içinde `Arguments.argumentSet`** adı KT kimliğiyle başlar: `argumentSet("KT-19 BR-07 07:00 kerahat başlangıcı", ...)`. Aynı türden satırları (ör. kerahat sınırları) tek tabloda toplamak için bunu kullan.
+  Başka bir biçim (yorum, `@DisplayName`, değişken adı) KT kimliği sayılmaz.
+- **Diğer test adları da kimlik taşır:** `BR12_...`, `KS_TRK_02_...` (SRS Bölüm 8). Bu adlar büyük harfle başladığı için `.editorconfig`, ktlint'in fonksiyon adı kuralını yalnızca `@Test` ve `@ParameterizedTest` (ve Compose için `@Composable`) fonksiyonlarında atlar. Bu istisnayı genişletme.
+- **Sabit referans gün (K-17):** Domain testleri karar tablosundaki fikstürü test kaynaklarındaki `ReferenceDay` yardımcısıyla kullanır: imsak 05:30, güneş 07:00, öğle 12:30, ikindi 15:30, akşam 18:00, yatsı 19:30, Europe/Istanbul. G1 = 2 Mart 2026 Pazartesi (G5 cuma). "G6 17:00" testte `ReferenceDay.at(6, "17:00")` olarak yazılır. Testler gerçek tarihe, cihaz saatine ya da sistemin saat dilimine bağlı olamaz.
+- **Sınırlar ve değişmezler:** Tam 72. ve 240. saat, vaktin son dakikası, yaz saati geçişi; "borç asla negatif olmaz" gibi değişmezler (K-12). Değişmezler, ek kütüphane kullanmadan parametreli testlerle sınanır.
 - **Fake tercih edilir:** Repository'ler için bellek içi fake yaz (K-14).
-- **Testi geçirmek için asla şunları yapma:** testi silmek, `@Disabled`/`@Ignore` eklemek, beklenen değeri koda uydurmak, karar tablosundaki beklentiyi değiştirmek. Kod ile karar tablosu uyuşmuyorsa **kod yanlıştır**. Karar tablosunun kendisi yanlış görünüyorsa dur ve sor.
-- **Kapsam hedefi:** `:core:domain` için en az %90 (NFR-MNT-01).
+- **Testi geçirmek için asla şunları yapma:** testi silmek, `@Disabled` eklemek, beklenen değeri koda uydurmak, karar tablosundaki beklentiyi değiştirmek, kapsamı yükseltmek için sınıfları ölçümden hariç tutmak. Kod ile karar tablosu uyuşmuyorsa **kod yanlıştır**. Karar tablosunun kendisi yanlış görünüyorsa dur ve sor.
+- **Kapsam kapısı (K-15):** `:core:domain` satır kapsamı en az %90 (NFR-MNT-01). `ciCheck` altında olmazsa başarısız olur.
+- **KT izlenebilirlik kapısı (K-16):** `ciCheck`, `docs/karar-tablosu.md`'deki her geçerli KT satırının ya bir testi olduğunu ya da kök `build.gradle.kts`'teki **bekleyen KT listesinde** durduğunu denetler. İki yönlüdür: testi yazılmış bir kimlik listede kalırsa da başarısız olur. Bir Faz 2 kartı, kapsadığı kimlikleri bu listeden siler; kartta yazmayan bir kimliği listeden silme ya da listeye ekleme. Kapı ayrıca `:core:domain` testlerinde `@Disabled` görürse başarısız olur.
 
 ## 9. Fıkhi kurallar: kırmızı çizgiler
 
@@ -152,17 +159,22 @@ Bu uygulamada fıkhi bir hata, kullanıcının ibadetini etkiler. Bu yüzden:
 **Git**
 - `main`'e doğrudan commit atılmaz. Her görev ayrı ve kısa ömürlü bir dalda yapılır: `feat/<kısa-ad>`, `fix/<kısa-ad>`, `test/<kısa-ad>`, `chore/<kısa-ad>`.
 - Commit mesajları İngilizce ve Conventional Commits biçimindedir, örneğin `feat(domain): add kerahat window check (BR-07)`. Küçük ve anlamlı commit'ler at.
+- Dosyaları commit'e **adıyla** ekle (`git add <yol>`). `git add -A`, `git add .` ve `git commit -a` kullanma; çalışma ağacında başka bir kartın dosyaları bulunabilir.
 - Birleştirme GitHub'da Pull Request ile ve "Squash and merge" yöntemiyle yapılır. `push` ve PR açma işini kullanıcı istemedikçe yapma.
+- `git stash`, `git commit --amend`, `git reset --hard`, `git push --force` ve `main`'e dokunan her işlem yasak; gerekiyorsa dur ve sor.
 - Asla commit'leme: `.claude/settings.local.json`, `local.properties`, API anahtarı, keystore, `*.jks`, gizli değişken. Yeni bir dosya türü ekliyorsan `.gitignore`'u kontrol et.
 
 **Komutlar** (Windows; Claude Code'un kabuğu Git Bash ise `./gradlew` da çalışır)
 - Derleme: `.\gradlew.bat assembleDebug`
 - Domain testleri: `.\gradlew.bat :core:domain:test`
+- Domain kapsam raporu: `.\gradlew.bat :core:domain:jacocoTestReport` (HTML: `core/domain/build/reports/jacoco/test/html/index.html`)
+- Domain kapsam kapısı: `.\gradlew.bat :core:domain:jacocoTestCoverageVerification`
+- KT izlenebilirlik kapısı: `.\gradlew.bat checkKtTraceability`
 - Tüm birim testleri: `.\gradlew.bat test`
 - Stil: `.\gradlew.bat ktlintCheck` (`build-logic` dahil her şeyi kontrol eder; otomatik düzeltme `ktlintFormat`)
 - Android Lint: `.\gradlew.bat lintDebug`
 - Modül ağacı: `.\gradlew.bat projects`
-- **CI'ın çalıştırdığı tek komut:** `.\gradlew.bat ciCheck` (ktlint, birim testleri, Android Lint ve lint kapısı, derleme). PR açmadan önce bunu yerelde çalıştır; yerelde yeşilse CI'da da yeşil olmalı.
+- **CI'ın çalıştırdığı tek komut:** `.\gradlew.bat ciCheck` (ktlint, birim testleri, `:core:domain` kapsam kapısı, KT izlenebilirlik kapısı, Android Lint ve lint kapısı, derleme). PR açmadan önce bunu yerelde çalıştır; yerelde yeşilse CI'da da yeşil olmalı.
 - **Lint kapısı:** `ciCheck`, bilinen lint uyarıları listesinde (mimari K-01) olmayan **her** yeni uyarıda ve listede olup artık görünmeyen her uyarıda başarısız olur. Listeyi kendiliğinden değiştirme; değişiklik bir planlama kararıdır, **dur ve sor.**
 
 **Bir görevin bitti tanımı**
@@ -175,6 +187,11 @@ Bu uygulamada fıkhi bir hata, kullanıcının ibadetini etkiler. Bu yüzden:
 - Her kartın Adım 0 planını `docs/tasks/<KART-KİMLİĞİ>-plan.md` dosyasına da yaz. Kullanıcının onay mesajındaki değişiklikleri plana işle ve planı dalın **ilk commit'lerinden biri** olarak ekle: `docs(tasks): add <KART-KİMLİĞİ> plan`.
 - Yeni bir oturumda nerede kaldığını bu plan dosyasından ve git geçmişinden öğren; eski sohbet kayıtlarını (`~/.claude` altı) **okuma.**
 
+**Spike (atılabilir prototip) kartları**
+- Bazı kartlar ürün kodu değil, bir soruyu ölçümle cevaplayan atılabilir bir prototip ister (ör. F1-05). Böyle bir kart, bu dosyadaki hangi kuralların **o kart için** gevşediğini açıkça listeler. Kartta gevşetildiği yazmayan her kural aynen geçerlidir.
+- Spike kodu `main`'e **asla** birleştirilmez. `main`'e yalnızca kart, plan ve sonuç raporu (belgeler) girer.
+- Spike'ta ölçüm dürüstlüğü her şeyden önce gelir: bir deneme başarısızsa "başarısız" yaz; sonucu güzelleştirme, eksik ölçümü tahminle doldurma.
+
 **`main` koruması**
 - `main` dalı GitHub'da korunur: doğrudan push yapılamaz, birleştirme yalnızca Pull Request ile ve CI yeşilken olur. Bu kuralı aşmaya çalışma.
 
@@ -184,14 +201,14 @@ Her görevin sonunda şu biçimde kısa bir rapor yaz. Rapor, gözden geçirmede
 
 - Raporu `docs/tasks/<KART-KİMLİĞİ>-rapor.md` dosyasına yaz (örneğin `docs/tasks/F1-02-rapor.md`) ve dalın **son commit'i** olarak ekle: `docs(tasks): add <KART-KİMLİĞİ> report`. Sohbette yalnızca kısa bir özet ver.
 - Raporu yalnızca sohbette bırakma: yeni bir oturum ve gözden geçiren kişi raporu depodan okur.
-- Komut çıktılarını raporda **özetle** (sonuç, test sayısı, uyarı sayısı). Uzun log yapıştırma.
+- Komut çıktılarını raporda **özetle** (sonuç, test sayısı, uyarı sayısı, kapsam yüzdesi, KT kapısının "testli / bekleyen" sayıları). Uzun log yapıştırma.
 
 ```
 ## Rapor: <görev kartı adı>
 Dal: <dal adı>
 Yapılanlar: <madde madde>
 Değişen dosyalar: <liste>
-Testler: <hangi komut, kaç test, sonuç>
+Testler: <hangi komut, kaç test, sonuç; :core:domain satır kapsamı>
 Karşılanan kimlikler: <BR-xx, KT-xx, KS-xx, FR-xx>
 Varsayımlar: <kartta yazmayan ve senin seçtiğin her şey>
 Belge tutarsızlıkları: <bulduysan>
@@ -201,8 +218,10 @@ Açık sorular: <varsa>
 ## 12. Dur ve sor (bunlardan biri olursa kodu yazmadan önce sor)
 
 - Bir fıkhi kural belirsiz ya da hiçbir KT satırı durumu kapsamıyor.
-- Yeni bir kütüphane, izin (manifest) ya da ağ çağrısı gerekiyor.
+- Yeni bir kütüphane, Gradle eklentisi, izin (manifest) ya da ağ çağrısı gerekiyor.
 - Room şeması değişiyor. Bu, geçiş (migration) ve testi demektir.
 - Modül bağımlılık kuralları (Bölüm 6) ihlal edilmeden görev yapılamıyor.
 - Görev kartı bir belgeyle çelişiyor.
+- Bekleyen KT listesinde kartın söylemediği bir değişiklik gerekiyor ya da kapsam kapısı ancak sınıfları ölçümden çıkararak geçiyor.
+- Çalışma ağacında kartın beklemediği değişiklikler var.
 - Aynı hatayı iki denemede çözemedin. Üçüncü kez kör deneme yapma; ne denediğini ve hatayı raporla.

@@ -14,3 +14,9 @@ internal fun VersionCatalog.library(alias: String): Provider<MinimalExternalModu
     findLibrary(alias).orElseThrow {
         GradleException("Version catalog'da '$alias' kütüphanesi yok")
     }
+
+internal fun VersionCatalog.version(alias: String): String = findVersion(alias)
+    .orElseThrow {
+        GradleException("Version catalog'da '$alias' sürümü yok")
+    }
+    .requiredVersion

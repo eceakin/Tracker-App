@@ -43,7 +43,7 @@ macOS / Linux:
 ./gradlew ciCheck
 ```
 
-`ciCheck` tek komutta ktlint, birim testleri, Android Lint kapısı ve debug derlemesini çalıştırır. GitHub Actions CI'ı her Pull Request'te ve `main`'e yapılan her birleştirmede bu komutu çalıştırır; PR açmadan önce yerelde de aynı komut çalıştırılmalıdır.
+`ciCheck` tek komutta ktlint, birim testleri, Android Lint kapısı ve debug derlemesini çalıştırır. Ayrıca `:core:domain` satır kapsamı kapısını (en az %90) ve KT izlenebilirlik kapısını çalıştırır. Kapsam raporu `core/domain/build/reports/jacoco/test/html/index.html` adresindedir. GitHub Actions CI'ı her Pull Request'te ve `main`'e yapılan her birleştirmede bu komutu çalıştırır; PR açmadan önce yerelde de aynı komut çalıştırılmalıdır.
 
 ## Belgeler
 
