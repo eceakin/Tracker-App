@@ -1,6 +1,6 @@
 # Geliştirme Yol Haritası — Namaz & Kaza Takip
 
-26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (F2-01 tamamlandı; F2-02 kartı yazıldı)
+26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (F2-02 tamamlandı; F2-03 kartı yazıldı)
 
 ## Özet
 
@@ -79,8 +79,8 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 | Kart | Kapsam | KT satırları | Kurallar | Durum |
 | --- | --- | --- | --- | --- |
 | F2-01 | Temel model ve test altyapısı: `RuleSet.HANEFI`, `PrayerTimesDay`, referans gün fikstürü (`ReferenceDay`), JaCoCo kapsam kapısı (%90), iki yönlü KT izlenebilirlik kapısı ve bekleyen KT listesi | — | BR-01, M-21, M-23, M-25, K-15 – K-17 | Tamamlandı (2 Kasım 2026, PR #5). 46 test; satır ve dal kapsamı %100; KT kapısı 101 geçerli, 0 testli, 101 bekliyor |
-| F2-02 | Vakit hesapları: namaz günü (imsakta başlar), şu anki vakit, vakit aralıkları `[başlangıç, bitiş)`, "kaçırıldı" anları, kerahat pencereleri; yaz saati olan bir bölgede geçiş günü testleri | — (BR adlı sınır testleri) | BR-02, BR-04, BR-07, NFR-CMP-02, M-23 | Kart yazıldı (2 Kasım 2026) |
-| F2-03 | Kaza defteri: borç ekleme ve kılınan kaza kayıtları (append-only), kalan borcun kayıtlardan hesabı, düzeltme kaydı, borcun asla negatif olmaması, vakit seçiminin zorunluluğu | KT-35, 36, 81 (3) | BR-00, BR-09, FR-KAZ-01, 02, 04, 05 | Bekliyor |
+| F2-02 | Vakit hesapları: namaz günü (imsakta başlar), şu anki vakit, vakit aralıkları `[başlangıç, bitiş)`, "kaçırıldı" anları, kerahat pencereleri; yaz saati olan bir bölgede geçiş günü testleri | — (BR adlı sınır testleri) | BR-02, BR-04, BR-07, NFR-CMP-02, M-23 | Tamamlandı (2 Kasım 2026, PR #6). 110 test; satır ve dal kapsamı %100 |
+| F2-03 | Kaza defteri: borç ekleme ve kılınan kaza kayıtları (append-only), kalan borcun kayıtlardan hesabı, düzeltme kaydı, borcun asla negatif olmaması, vakit seçiminin zorunluluğu | KT-35, 36, 81 (3) | BR-00, BR-09, FR-KAZ-01, 02, 04, 05, DATA-04 | Kart yazıldı (2 Kasım 2026) |
 | F2-04 | Günlük işaretleme ve kaçırıldı önerileri: vakti girmeyen kalem, vitir–yatsı bağı, kaçırıldı önerisi, otomatik ekleme, geri alma, geçmiş günde "vaktinde / kaza olarak kıldım", cuma, bayram | KT-01 – 13, 15 – 18, 34 (18) | BR-02, 03, 04, 08, 09 | Bekliyor |
 | F2-05 | Kerahatte kaza ve sefer: üç pencerenin sınır dakikaları, ikindi istisnası, pencerenin `RuleSet`'ten gelmesi, seferde kaçan namazın rekâtı (P1) | KT-19 – 27, 91, 32, 33 (12) | BR-07, BR-18 | Bekliyor |
 | F2-06 | Tertip notu ve vakit darlığı formülü | KT-28 – 31, 82 – 84, 92, 93 (9) | BR-17 | Bekliyor |
@@ -105,8 +105,8 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 | Varlık | Alanlar |
 | --- | --- |
 | `PrayerRecord` | tarih (namaz günü), kalem (sabah…yatsı, vitir), durum (kılındı / kılınmadı / mazeretli / belirsiz), işaretlenme anı, cuma mı, kaza olarak mı kılındı |
-| `KazaEntry` | kalem, kaynak tarih (biliniyorsa), tür (elle / otomatik / hesaplayıcı / düzeltme), seferde kaçtı mı, oluşturulma anı |
-| `KazaPerformed` | kalem, kılınma anı |
+| `KazaEntry` | kimlik, kalem, kaynak tarih (biliniyorsa), tür (elle / öneri / otomatik / hesaplayıcı / düzeltme), adet, düzelttiği kayıt, seferde kaçtı mı, oluşturulma anı (SRS DATA-04) |
+| `KazaPerformed` | kimlik, kalem, kılınma anı |
 | `MazeretPeriod` | tür (hayız / nifas), başlangıç anı, bitiş anı, kanama aralıkları (ara temizliği olan dönemde birden çok), uyarılı mı |
 | `PrayerTimesDay` | ilçe, tarih, imsak, güneş, öğle, ikindi, akşam, yatsı, kaynak (Diyanet / tahmini) |
 | `DaySnapshot` | tarih, o güne ait ayarların ve kural seti sürümünün anlık kopyası (BR-21) |
@@ -121,7 +121,7 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 
 **Bitti tanımı:** Karar tablosundaki tüm senaryolar yeşil (bekleyen KT listesi boş), `:core:domain` test kapsamı %90'ın üstünde, modülde tek bir Android import'u yok.
 
-**Durum (2 Kasım 2026):** Kart planı onaylandı (13 kart). F2-01 tamamlandı (PR #5). F2-02 yazıldı.
+**Durum (2 Kasım 2026):** Kart planı onaylandı (13 kart). F2-01 (PR #5) ve F2-02 (PR #6) tamamlandı. F2-03 yazıldı; kaza defterinin veri modeli SRS 1.0-taslak.10'da (DATA-04).
 
 **Birleştirme başlığı:** Squash commit başlığı Conventional Commits biçiminde ve kart kimliğiyle verilir, ör. `feat(domain): add domain foundation and quality gates (F2-01) (#5)`. GitHub'ın dal adından ürettiği başlık ("Feat/f2 01 …") kullanılmaz.
 
