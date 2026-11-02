@@ -20,6 +20,19 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
             "Kaza kayıt kimlikleri benzersiz olmalı"
         }
 
+        val operationPrayers = mutableMapOf<OperationId, Prayer>()
+        fun checkOperation(operationId: OperationId?, prayer: Prayer) {
+            if (operationId == null) {
+                return
+            }
+            val existing = operationPrayers.putIfAbsent(operationId, prayer)
+            require(existing == null || existing == prayer) {
+                "Bir işlemin kayıtları aynı kalemde olmalı (DATA-04)"
+            }
+        }
+        entries.forEach { checkOperation(it.operationId, it.prayer) }
+        performed.forEach { checkOperation(it.operationId, it.prayer) }
+
         val entriesById = entries.associateBy { it.id }
         val performedById = performed.associateBy { it.id }
         val correctedTargets = mutableSetOf<KazaRecordId>()
@@ -109,6 +122,9 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
         if (entry == null) {
             val performedRecord = performed.firstOrNull { it.id == id }
                 ?: return UndoDecision.Blocked(UndoBlock.NOT_FOUND)
+            if (performedRecord.operationId != null) {
+                return UndoDecision.Blocked(UndoBlock.PART_OF_OPERATION)
+            }
             if (isCorrected(id)) {
                 return UndoDecision.Blocked(UndoBlock.ALREADY_CORRECTED)
             }
@@ -125,6 +141,9 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
             )
         }
 
+        if (entry.operationId != null) {
+            return UndoDecision.Blocked(UndoBlock.PART_OF_OPERATION)
+        }
         if (entry.kind == KazaEntryKind.DUZELTME) {
             return UndoDecision.Blocked(UndoBlock.CORRECTION_NOT_UNDOABLE)
         }
@@ -184,7 +203,11 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
      *
      * `ELLE`, `HESAPLAYICI` ve `DUZELTME` kayıtları öneriyi kapatmaz.
      */
-    fun hasOpenEntryFor(date: LocalDate, prayer: Prayer): Boolean = entries.any { entry ->
+    fun hasOpenEntryFor(date: LocalDate, prayer: Prayer): Boolean =
+        openEntriesFor(date, prayer).isNotEmpty()
+
+    /** Bu tarih ve kalem için geri alınmamış `ONERI`/`OTOMATIK` kayıtları (DATA-05). */
+    fun openEntriesFor(date: LocalDate, prayer: Prayer): List<KazaEntry> = entries.filter { entry ->
         val hasOpenKind = entry.kind == KazaEntryKind.ONERI ||
             entry.kind == KazaEntryKind.OTOMATIK
         hasOpenKind &&

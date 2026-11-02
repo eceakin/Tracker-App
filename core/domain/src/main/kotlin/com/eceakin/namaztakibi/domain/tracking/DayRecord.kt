@@ -31,6 +31,9 @@ data class DayRecord(val date: LocalDate, val marks: List<PrayerMark>) {
             }
         }
         marks.forEach { mark ->
+            require(mark.asKaza == (mark.operationId != null)) {
+                "Kaza işareti işlem kimliğiyle birlikte olmalı (DATA-05)"
+            }
             if (mark.asCuma) {
                 require(mark.prayer == Prayer.OGLE) {
                     "Cuma işareti yalnızca öğle kalemine konur (BR-08)"
@@ -183,6 +186,115 @@ data class DayRecord(val date: LocalDate, val marks: List<PrayerMark>) {
                 MissedOutcome.Suggest(date = date, prayer = prayer)
             }
         }
+    }
+
+    /**
+     * Geç işaretleme kararı (FR-TRK-04, DATA-05, KT-12, KT-13).
+     *
+     * Sıra: zaten işaretli; vakit çıkmadı; vitirden önce yatsı; "vaktinde kıldım"
+     * (açık kayıt yok / borç negatife düşer / onay sorulur); "sonradan kaza olarak
+     * kıldım" (açık kayıt ve borç varsa yalnızca kılınan; aksi hâlde öneri + kılınan).
+     * Geç işaret hiçbir zaman cuma olarak konmaz; motor kimlik üretmez.
+     */
+    fun decideLateMark(
+        prayer: Prayer,
+        choice: LateChoice,
+        windows: PrayerDayWindows,
+        ledger: KazaLedger,
+        clock: Clock
+    ): LateMarkDecision {
+        require(windows.day.date == date) {
+            "Vakitler bu gün kaydına ait olmalı"
+        }
+        if (markOf(prayer) != null) {
+            return LateMarkDecision.Blocked(LateMarkBlock.ALREADY_MARKED)
+        }
+
+        val now = clock.instant()
+        if (now < windows.missedAt(prayer)) {
+            return LateMarkDecision.Blocked(LateMarkBlock.NOT_LATE)
+        }
+        if (prayer == Prayer.VITIR && markOf(Prayer.YATSI) == null) {
+            return LateMarkDecision.Blocked(LateMarkBlock.YATSI_FIRST)
+        }
+
+        val open = ledger.openEntriesFor(date, prayer)
+        val asKaza = choice == LateChoice.AS_KAZA
+        val mark = RecordWrite.Mark(
+            date = date,
+            prayer = prayer,
+            markedAt = now,
+            asCuma = false,
+            asKaza = asKaza
+        )
+
+        if (choice == LateChoice.ON_TIME && open.isEmpty()) {
+            return LateMarkDecision.Allowed(
+                LateMarkWrites(mark = mark, kazaWrites = emptyList(), grouped = false)
+            )
+        }
+        if (choice == LateChoice.ON_TIME &&
+            ledger.balance(prayer) - open.sumOf { it.count } < 0
+        ) {
+            return LateMarkDecision.Allowed(
+                LateMarkWrites(mark = mark, kazaWrites = emptyList(), grouped = false)
+            )
+        }
+        if (choice == LateChoice.ON_TIME) {
+            val corrections = open.map { entry ->
+                KazaWrite.AddEntry(
+                    prayer = entry.prayer,
+                    sourceDate = entry.sourceDate,
+                    kind = KazaEntryKind.DUZELTME,
+                    count = -entry.count,
+                    corrects = entry.id,
+                    missedInSefer = entry.missedInSefer,
+                    createdAt = now
+                )
+            }
+            return LateMarkDecision.NeedsConfirmation(
+                question = LateMarkQuestion.UNDO_ADDED_DEBT,
+                ifConfirmed = LateMarkWrites(
+                    mark = mark,
+                    kazaWrites = corrections,
+                    grouped = false
+                ),
+                ifDeclined = LateMarkWrites(
+                    mark = mark,
+                    kazaWrites = emptyList(),
+                    grouped = false
+                )
+            )
+        }
+        if (open.isNotEmpty() && ledger.balance(prayer) >= 1) {
+            return LateMarkDecision.Allowed(
+                LateMarkWrites(
+                    mark = mark,
+                    kazaWrites = listOf(
+                        KazaWrite.AddPerformed(prayer = prayer, performedAt = now)
+                    ),
+                    grouped = true
+                )
+            )
+        }
+        return LateMarkDecision.Allowed(
+            LateMarkWrites(
+                mark = mark,
+                kazaWrites = listOf(
+                    KazaWrite.AddEntry(
+                        prayer = prayer,
+                        sourceDate = date,
+                        kind = KazaEntryKind.ONERI,
+                        count = 1,
+                        corrects = null,
+                        missedInSefer = false,
+                        createdAt = now
+                    ),
+                    KazaWrite.AddPerformed(prayer = prayer, performedAt = now)
+                ),
+                grouped = true
+            )
+        )
     }
 
     companion object {

@@ -47,11 +47,13 @@ data class KazaEntry(
     val count: Int,
     val corrects: KazaRecordId?,
     val missedInSefer: Boolean,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val operationId: OperationId? = null
 ) {
     init {
         if (kind == KazaEntryKind.DUZELTME) {
             require(count != 0) { "Düzeltme adedi sıfır olamaz" }
+            require(operationId == null) { "Düzeltme kaydı bir işleme ait olamaz" }
         } else {
             require(count > 0) { "Düzeltme dışındaki türlerde adet pozitif olmalı" }
             require(corrects == null) { "Düzeltme dışındaki türler bir kaydı düzeltemez" }
@@ -66,4 +68,9 @@ data class KazaEntry(
  * @property prayer Kılınan kazanın kalemi.
  * @property performedAt Kılınma anı.
  */
-data class KazaPerformed(val id: KazaRecordId, val prayer: Prayer, val performedAt: Instant)
+data class KazaPerformed(
+    val id: KazaRecordId,
+    val prayer: Prayer,
+    val performedAt: Instant,
+    val operationId: OperationId? = null
+)

@@ -2,6 +2,7 @@ package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
 import com.eceakin.namaztakibi.domain.kaza.KazaLedger
+import com.eceakin.namaztakibi.domain.kaza.OperationId
 import com.eceakin.namaztakibi.domain.settings.DaySettings
 import com.eceakin.namaztakibi.domain.settings.Gender
 import com.eceakin.namaztakibi.domain.testing.ReferenceDay
@@ -401,6 +402,21 @@ class MarkPrayerTest {
                 }
             ),
             Arguments.argumentSet(
+                "FR-TRK-03 vitir bosken yatsi geri alinir",
+                Executable {
+                    val record = DayRecord(
+                        date = ReferenceDay.date(1),
+                        marks = listOf(cm(Prayer.YATSI, "19:45"))
+                    )
+                    assertEquals(
+                        UnmarkDecision.Allowed(
+                            RecordWrite.Clear(ReferenceDay.date(1), Prayer.YATSI)
+                        ),
+                        record.decideUnmark(Prayer.YATSI)
+                    )
+                }
+            ),
+            Arguments.argumentSet(
                 "FR-TRK-03 kaza isareti",
                 Executable {
                     val record = DayRecord(
@@ -441,7 +457,8 @@ class MarkPrayerTest {
                 prayer = prayer,
                 markedAt = ReferenceDay.at(1, time),
                 asCuma = false,
-                asKaza = asKaza
+                asKaza = asKaza,
+                operationId = if (asKaza) OperationId("op1") else null
             )
     }
 }

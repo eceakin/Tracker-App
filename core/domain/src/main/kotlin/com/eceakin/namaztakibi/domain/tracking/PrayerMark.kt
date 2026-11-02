@@ -1,6 +1,7 @@
 package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.kaza.OperationId
 import java.time.Instant
 
 /**
@@ -15,5 +16,6 @@ data class PrayerMark(
     val prayer: Prayer,
     val markedAt: Instant,
     val asCuma: Boolean,
-    val asKaza: Boolean
+    val asKaza: Boolean,
+    val operationId: OperationId? = null
 )

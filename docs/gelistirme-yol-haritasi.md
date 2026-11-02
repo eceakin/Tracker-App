@@ -1,6 +1,6 @@
 # Geliştirme Yol Haritası — Namaz & Kaza Takip
 
-26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (F2-03 tamamlandı; F2-04 bölündü ve yazıldı)
+26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (F2-04 tamamlandı; F2-04b yazıldı)
 
 ## Özet
 
@@ -81,8 +81,8 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 | F2-01 | Temel model ve test altyapısı: `RuleSet.HANEFI`, `PrayerTimesDay`, referans gün fikstürü (`ReferenceDay`), JaCoCo kapsam kapısı (%90), iki yönlü KT izlenebilirlik kapısı ve bekleyen KT listesi | — | BR-01, M-21, M-23, M-25, K-15 – K-17 | Tamamlandı (2 Kasım 2026, PR #5). 46 test; satır ve dal kapsamı %100; KT kapısı 101 geçerli, 0 testli, 101 bekliyor |
 | F2-02 | Vakit hesapları: namaz günü (imsakta başlar), şu anki vakit, vakit aralıkları `[başlangıç, bitiş)`, "kaçırıldı" anları, kerahat pencereleri; yaz saati olan bir bölgede geçiş günü testleri | — (BR adlı sınır testleri) | BR-02, BR-04, BR-07, NFR-CMP-02, M-23 | Tamamlandı (2 Kasım 2026, PR #6). 110 test; satır ve dal kapsamı %100 |
 | F2-03 | Kaza defteri: borç ekleme ve kılınan kaza kayıtları (append-only), kalan borcun kayıtlardan hesabı, düzeltme kaydı, borcun asla negatif olmaması, vakit seçiminin zorunluluğu | KT-35, 36, 81 (3) | BR-00, BR-09, FR-KAZ-01, 02, 04, 05, DATA-04 | Tamamlandı (2 Kasım 2026, PR #7). 149 test; satır %99,7, dal %97,1; KT kapısı 101 / 3 / 98 |
-| F2-04 | Günlük işaretleme ve kaçırıldı önerileri: vakti girmeyen kalem, vitir–yatsı bağı, vakit içinde işaretleme ve geri alma, türetilen durum, kaçırıldı önerisi, otomatik ekleme, kurulum öncesi vakitler, cuma, bayram | KT-01 – 11, 15 – 18, 34 (16) | BR-02, 03, 04, 08, 09; FR-TRK-01 – 03, 06, 07; FR-KAZ-03; FR-ONB-05; DATA-05 | Kart yazıldı (2 Kasım 2026) |
-| F2-04b | Geç işaretleme ve birlikte geri alma: geçmiş günde "vaktinde kıldım / sonradan kaza olarak kıldım", öneri bekleyen vakitte tek işlemde borç ekleme ve kaza düşme, işlem kimliği, birlikte geri alma; onaylanmış borcu olan vakitte "vaktinde kıldım" | KT-12, 13 (2) | BR-04, FR-TRK-04, FR-KAZ-05, KS-KAZ-10 | Bekliyor |
+| F2-04 | Günlük işaretleme ve kaçırıldı önerileri: vakti girmeyen kalem, vitir–yatsı bağı, vakit içinde işaretleme ve geri alma, türetilen durum, kaçırıldı önerisi, otomatik ekleme, kurulum öncesi vakitler, cuma, bayram | KT-01 – 11, 15 – 18, 34 (16) | BR-02, 03, 04, 08, 09; FR-TRK-01 – 03, 06, 07; FR-KAZ-03; FR-ONB-05; DATA-05 | Tamamlandı (2 Kasım 2026, PR #8). 203 test; satır %99,8, dal %97,3; KT kapısı 101 / 19 / 82 |
+| F2-04b | Geç işaretleme ve birlikte geri alma: geçmiş günde "vaktinde kıldım / sonradan kaza olarak kıldım", öneri bekleyen vakitte tek işlemde borç ekleme ve kaza düşme, işlem kimliği, birlikte geri alma; onaylanmış borcu olan vakitte "vaktinde kıldım" | KT-12, 13 (2) | BR-03, BR-04, FR-TRK-04, FR-KAZ-05, DATA-04, DATA-05 | Kart yazıldı (2 Kasım 2026) |
 | F2-05 | Kerahatte kaza ve sefer: üç pencerenin sınır dakikaları, ikindi istisnası, pencerenin `RuleSet`'ten gelmesi, seferde kaçan namazın rekâtı (P1) | KT-19 – 27, 91, 32, 33 (12) | BR-07, BR-18 | Bekliyor |
 | F2-06 | Tertip notu ve vakit darlığı formülü | KT-28 – 31, 82 – 84, 92, 93 (9) | BR-17 | Bekliyor |
 | F2-07 | Mazeret başlangıcı ve bitişi: `MazeretPeriod`, vakit içinde başlayan mazeret, gusül + tekbir hesabı, tam 240./960. saat istisnası, yatsıda biten mazerette vitir, geriye dönük bitiş, gusül aralığı | KT-37 – 51, 90 (16) | BR-10, 11, 12 | Bekliyor |
@@ -105,9 +105,9 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 
 | Varlık | Alanlar |
 | --- | --- |
-| `PrayerRecord` | tarih (namaz günü), kalem (sabah…yatsı, vitir), işaretlenme anı, cuma mı, kaza olarak mı kılındı; durum (kılındı / kılınmadı / mazeretli / belirsiz) türetilir (SRS DATA-05) |
-| `KazaEntry` | kimlik, kalem, kaynak tarih (biliniyorsa), tür (elle / öneri / otomatik / hesaplayıcı / düzeltme), adet, düzelttiği kayıt, seferde kaçtı mı, oluşturulma anı (SRS DATA-04) |
-| `KazaPerformed` | kimlik, kalem, kılınma anı |
+| `PrayerRecord` | tarih (namaz günü), kalem (sabah…yatsı, vitir), işaretlenme anı, cuma mı, kaza olarak mı kılındı, işlem kimliği; durum (kılındı / kılınmadı / mazeretli / belirsiz) türetilir (SRS DATA-05) |
+| `KazaEntry` | kimlik, kalem, kaynak tarih (biliniyorsa), tür (elle / öneri / otomatik / hesaplayıcı / düzeltme), adet, düzelttiği kayıt, seferde kaçtı mı, oluşturulma anı, işlem kimliği (SRS DATA-04) |
+| `KazaPerformed` | kimlik, kalem, kılınma anı, işlem kimliği |
 | `MazeretPeriod` | tür (hayız / nifas), başlangıç anı, bitiş anı, kanama aralıkları (ara temizliği olan dönemde birden çok), uyarılı mı |
 | `PrayerTimesDay` | ilçe, tarih, imsak, güneş, öğle, ikindi, akşam, yatsı, kaynak (Diyanet / tahmini) |
 | `DaySnapshot` | tarih, o güne ait ayarların ve kural seti sürümünün anlık kopyası (BR-21) |
@@ -122,7 +122,7 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 
 **Bitti tanımı:** Karar tablosundaki tüm senaryolar yeşil (bekleyen KT listesi boş), `:core:domain` test kapsamı %90'ın üstünde, modülde tek bir Android import'u yok.
 
-**Durum (2 Kasım 2026):** Kart planı onaylandı (13 kart; F2-04'ün bölünmesiyle 14). F2-01 (PR #5), F2-02 (PR #6) ve F2-03 (PR #7) tamamlandı. F2-04 yazıldı; günlük kaydın durumu SRS 1.0-taslak.11'de (DATA-05).
+**Durum (2 Kasım 2026):** Kart planı onaylandı (13 kart; F2-04'ün bölünmesiyle 14). F2-01 (PR #5), F2-02 (PR #6), F2-03 (PR #7) ve F2-04 (PR #8) tamamlandı. F2-04b yazıldı; geç işaretleme ve işlem kimliği SRS 1.0-taslak.12'de (DATA-04, DATA-05).
 
 **Birleştirme başlığı:** Squash commit başlığı Conventional Commits biçiminde ve kart kimliğiyle verilir, ör. `feat(domain): add domain foundation and quality gates (F2-01) (#5)`. GitHub'ın dal adından ürettiği başlık ("Feat/f2 01 …") kullanılmaz.
 

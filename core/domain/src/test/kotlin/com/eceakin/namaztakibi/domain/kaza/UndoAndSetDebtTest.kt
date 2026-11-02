@@ -187,6 +187,27 @@ class UndoAndSetDebtTest {
                 }
             ),
             Arguments.argumentSet(
+                "FR-KAZ-05 kilinan kaza ikinci geri alma",
+                Executable {
+                    val ledger = KazaLedger(
+                        entries = listOf(
+                            entry("e1", kind = KazaEntryKind.ELLE, count = 2),
+                            entry(
+                                "d1",
+                                kind = KazaEntryKind.DUZELTME,
+                                count = 1,
+                                corrects = KazaRecordId("p1")
+                            )
+                        ),
+                        performed = listOf(performed("p1"))
+                    )
+                    assertEquals(
+                        UndoDecision.Blocked(UndoBlock.ALREADY_CORRECTED),
+                        ledger.decideUndo(KazaRecordId("p1"), clock())
+                    )
+                }
+            ),
+            Arguments.argumentSet(
                 "FR-KAZ-05 kilinan kaza geri alinir",
                 Executable {
                     val ledger = KazaLedger(
