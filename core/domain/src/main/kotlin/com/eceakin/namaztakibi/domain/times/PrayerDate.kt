@@ -8,8 +8,8 @@ import java.time.ZoneId
  * Verilen anın ait olduğu namaz gününün tarihi. Namaz günü imsakta başlar; gece
  * yarısından imsaka kadar önceki namaz günü geçerlidir (SRS 1.3, FR-TRK-05).
  *
- * [clock] yalnızca "şu an" için kullanılır; `clock.zone` kullanılmaz. Takvim günü
- * ilçenin saat dilimi olan [zone] ile bulunur (M-23, DATA-03).
+ * [clock] yalnızca "şu an" için kullanılır; saat nesnesinin bölgesi kullanılmaz. Takvim
+ * günü ilçenin saat dilimi olan [zone] ile bulunur (M-23, DATA-03).
  *
  * @param clock Şu anı veren saat.
  * @param zone İlçenin saat dilimi.
