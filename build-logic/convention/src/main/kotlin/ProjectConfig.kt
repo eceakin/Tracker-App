@@ -9,4 +9,7 @@ object ProjectConfig {
     const val TARGET_SDK = 37
     val JAVA_VERSION: JavaVersion = JavaVersion.VERSION_17
     val JVM_TARGET: JvmTarget = JvmTarget.JVM_17
+
+    // NFR-MNT-01, mimari K-15 — :core:domain satır kapsamı en az %90.
+    const val MIN_LINE_COVERAGE = 0.90
 }

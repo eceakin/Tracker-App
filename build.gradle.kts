@@ -239,6 +239,12 @@ gradle.projectsEvaluated {
         if (module != rootProject && module.tasks.names.contains("test")) {
             ciCheck.configure { dependsOn(module.tasks.named("test")) }
         }
+        // K-15 — kapsam kapısı olan her projenin doğrulama görevi ciCheck'e açıkça bağlanır.
+        if (module.tasks.names.contains("jacocoTestCoverageVerification")) {
+            ciCheck.configure {
+                dependsOn(module.tasks.named("jacocoTestCoverageVerification"))
+            }
+        }
     }
     ciCheck.configure { dependsOn(project(":app").tasks.named("assembleDebug")) }
 }
