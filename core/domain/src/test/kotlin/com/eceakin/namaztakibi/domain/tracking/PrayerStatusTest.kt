@@ -89,6 +89,17 @@ class PrayerStatusTest {
                         ReferenceDay.clockAt(2, "13:00")
                     )
                 }
+            ),
+            Arguments.argumentSet(
+                "M-24 decideMark yanlis gun",
+                Executable {
+                    DayRecord.empty(ReferenceDay.date(1)).decideMark(
+                        Prayer.OGLE,
+                        asCuma = false,
+                        PrayerDayWindows(ReferenceDay.times(2), ReferenceDay.times(3)),
+                        ReferenceDay.clockAt(2, "13:00")
+                    )
+                }
             )
         )
 

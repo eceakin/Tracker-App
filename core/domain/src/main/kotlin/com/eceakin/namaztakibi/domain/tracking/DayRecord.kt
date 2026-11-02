@@ -64,6 +64,69 @@ data class DayRecord(val date: LocalDate, val marks: List<PrayerMark>) {
         }
     }
 
+    /**
+     * İşaretleme kararı (FR-TRK-01 – 03, 06, 07; KT-01 – 06, 15, 17, 18; DATA-05).
+     *
+     * Sıra: zaten işaretli; vakit girmedi; vakit çıktı (seçim gerekir); vitirden önce
+     * yatsı; cuma işareti geçersiz; aksi hâlde izin. Vakti çıkmış kuralı, "önce yatsı"
+     * kuralından önce gelir. Cinsiyet işaretlemeyi etkilemez.
+     */
+    fun decideMark(
+        prayer: Prayer,
+        asCuma: Boolean,
+        windows: PrayerDayWindows,
+        clock: Clock
+    ): MarkDecision {
+        require(windows.day.date == date) {
+            "Vakitler bu gün kaydına ait olmalı"
+        }
+        if (markOf(prayer) != null) {
+            return MarkDecision.Blocked(MarkBlock.ALREADY_MARKED)
+        }
+
+        val now = clock.instant()
+        val window = windows.windowOf(prayer)
+        if (now < window.start) {
+            return MarkDecision.Blocked(MarkBlock.NOT_YET_IN_TIME)
+        }
+        if (now >= windows.missedAt(prayer)) {
+            return MarkDecision.NeedsLateChoice
+        }
+        if (prayer == Prayer.VITIR && markOf(Prayer.YATSI) == null) {
+            return MarkDecision.Blocked(MarkBlock.YATSI_FIRST)
+        }
+        if (asCuma && (prayer != Prayer.OGLE || date.dayOfWeek != DayOfWeek.FRIDAY)) {
+            return MarkDecision.Blocked(MarkBlock.CUMA_NOT_ALLOWED)
+        }
+        return MarkDecision.Allowed(
+            RecordWrite.Mark(
+                date = date,
+                prayer = prayer,
+                markedAt = now,
+                asCuma = asCuma,
+                asKaza = false
+            )
+        )
+    }
+
+    /**
+     * İşaret kaldırma kararı (FR-TRK-03, DATA-05).
+     *
+     * Sıra: işaretsiz; yatsı geri alınırken vitir işaretli; işaret kaza olarak kılınmış;
+     * aksi hâlde izin. Geri almanın süre sınırı yoktur; saat almaz.
+     */
+    fun decideUnmark(prayer: Prayer): UnmarkDecision {
+        val mark = markOf(prayer)
+            ?: return UnmarkDecision.Blocked(UnmarkBlock.NOT_MARKED)
+        if (prayer == Prayer.YATSI && markOf(Prayer.VITIR) != null) {
+            return UnmarkDecision.Blocked(UnmarkBlock.UNMARK_VITIR_FIRST)
+        }
+        if (mark.asKaza) {
+            return UnmarkDecision.Blocked(UnmarkBlock.KAZA_MARK_NEEDS_GROUP_UNDO)
+        }
+        return UnmarkDecision.Allowed(RecordWrite.Clear(date = date, prayer = prayer))
+    }
+
     companion object {
         /** İşaretsiz gün kaydı. */
         fun empty(date: LocalDate): DayRecord = DayRecord(date = date, marks = emptyList())
