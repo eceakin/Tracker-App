@@ -1,6 +1,6 @@
 # Mimari ve Kodlama İlkeleri — Namaz Takibi
 
-29 Ekim 2026 · @ece · Sürüm 1.5 (1 Kasım 2026: sürüm güncelliği denetimleri lint kapısının dışında)
+29 Ekim 2026 · @ece · Sürüm 1.6 (2 Kasım 2026: kural motoru sözleşmesi, kapsam ve KT izlenebilirlik kapıları, referans gün fikstürü)
 
 ## Amaç ve kullanım
 
@@ -31,7 +31,7 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 
   | Plugin | Uygulandığı modüller | Kapsadığı |
   | --- | --- | --- |
-  | `namaztakibi.jvm.library` | `:core:domain` | Kotlin/JVM, JVM hedefi, JUnit Jupiter |
+  | `namaztakibi.jvm.library` | `:core:domain` | Kotlin/JVM, JVM hedefi, JUnit Jupiter, JaCoCo kapsam raporu ve kapsam kapısı (K-15) |
   | `namaztakibi.android.library` | `:core:data`, `:core:prayertimes`, `:widget` | Android library, SDK seviyeleri, JVM hedefi |
   | `namaztakibi.android.feature` | `:feature:*` | `android.library` + Compose + `:core:domain` bağımlılığı |
   | `namaztakibi.android.application` | `:app` | Android application, SDK seviyeleri, JVM hedefi |
@@ -63,10 +63,14 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 ## 3. Domain katmanı (M)
 
 - **M-20 — Kural motoru saf fonksiyonlardan oluşur.** Girdi alır, öneri döndürür; yan etkisi yoktur, veri yazmaz. Kararı kullanıcı verir ("şüphede sor").
-- **M-21 — Kural parametreleri `RuleSet`'te durur.** Hanefî sayıları (72/240 saat, 40 gün, 15 gün, tertip 6 vb.) koda gömülmez; ileride diğer mezhepler yeni bir `RuleSet` olarak eklenir.
+- **M-21 — Kural parametreleri `RuleSet`'te durur.** Hanefî sayıları (72/240 saat, 40 gün, 15 gün, tertip 6, rekât sayıları ve süresi, bulûğ yaşları vb.) koda gömülmez; ürünün kural seti `RuleSet.HANEFI`'dir. İleride diğer mezhepler yeni bir `RuleSet` olarak eklenir. `RuleSet` bir sürüm kimliği taşır; gün anlık kopyası (BR-21) hangi kural setiyle değerlendirildiğini bu kimlikle kaydeder.
 - **M-22 — Use case yalnızca değer kattığında yazılır.** İçinde tek bir repository çağrısı olan, iş yapmayan use case açılmaz; böyle durumlarda ViewModel doğrudan repository arayüzünü kullanır.
-- **M-23 — Zaman dışarıdan verilir.** Her zaman bağımlı fonksiyon `Clock` alır; anlar `Instant` + `ZoneId` ile tutulur. `LocalDateTime.now()` gibi doğrudan saat çağrıları domain'de yasaktır.
-- **M-24 — Hatalar tiplidir.** Beklenen iş sonuçları (ör. "vakit girmedi", "kerahat vakti") istisna değil, `sealed` sonuç tipleriyle döndürülür. İstisnalar yalnızca gerçekten beklenmeyen durumlar içindir.
+- **M-23 — Zaman dışarıdan verilir.** Her zaman bağımlı fonksiyon `Clock` alır; anlar `Instant` + `ZoneId` ile tutulur. `LocalDateTime.now()`, `ZoneId.systemDefault()` gibi doğrudan saat ve bölge çağrıları domain'de yasaktır.
+- **M-24 — Hatalar tiplidir.** Beklenen iş sonuçları (ör. "vakit girmedi", "kerahat vakti") istisna değil, `sealed` sonuç tipleriyle döndürülür. İstisnalar yalnızca gerçekten beklenmeyen durumlar içindir (ör. tutarsız vakit verisiyle model kurmak).
+- **M-25 — Kural motoru sözleşmesi.** Karar tablosundaki her satır "ön koşul + olay → beklenen" biçimindedir; motor fonksiyonları da bu biçimi izler:
+  - Girdi olarak durumu (kayıtlar, dönemler, borç kayıtları), olayı, `Clock`'u, `RuleSet`'i ve o günün ayarlarını parametre olarak alır. Global, singleton ya da "şu anki ayar" okumaz. Böylece her gün kendi tarihindeki ayarla değerlendirilir (BR-21) ve testler her girdiyi açıkça verir.
+  - Çıktı `sealed` bir sonuçtur: izin, engel (gerekçe tipiyle), öneri listesi ya da bilgi notu. Motor kullanıcıya gösterilecek metin döndürmez; metinler Faz 5'te `strings.xml`'e girer (hoca kontrolü, NFR-SEC-03). Testler tipi ve değerleri sınar.
+  - Motor veri yazmaz; "şu kayıtları ekle" önerisi döndürür. Yazma Faz 4'teki repository'nin işidir.
 
 ## 4. Data katmanı (M)
 
@@ -108,19 +112,29 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
   | `ObsoleteLintCustomCheck` | `:feature:calendar`, `:feature:kaza`, `:feature:mazeret`, `:feature:onboarding`, `:feature:settings`, `:feature:today` | `androidx.lifecycle` 2.11.0'ın lint kuralları AGP 9.5'in lint sürümüyle uyumsuz; `UnsafeLifecycleWhenUsage` ve `RepeatOnLifecycleWrongUsage` denetimleri çalışmıyor (F1-03) | Lifecycle ya da AGP'nin uyumsuzluğu gideren sürümüne geçildiğinde. Faz 5'te `repeatOnLifecycle` kullanılmaya başlanmadan önce yeniden kontrol edilir |
 
   **Sürüm güncelliği denetimleri kapının dışındadır.** `GradleDependency`, `NewerVersionAvailable` ve `AndroidGradlePluginVersion` kodu değil, internetteki güncel sürüm listesini kontrol eder; sonuçları zamana ve ağa bağlıdır. Kapıya dahil edilseler, kodda hiçbir değişiklik yokken yeni bir kütüphane yayımlandığı gün CI kırmızıya dönerdi. Bu yüzden lint kapısı bu üç kimliği karşılaştırmaya almaz. Kapatılmazlar ve gizlenmezler; lint raporlarında görünmeye devam ederler. Sürüm güncelliği her fazın başında elle gözden geçirilir. Bilinçli sürüm kararları ilgili görev raporunda kayıtlıdır (ör. Gradle 9.6.1, F1-03).
-- **K-02 — Adlandırma:** Kod İngilizce; fıkhi terimler domain'de kendi adlarıyla kalır (`Kaza`, `Mazeret`, `Vitir`), çevrilmeye zorlanmaz. Kullanıcıya görünen tüm metinler `strings.xml`'de, Türkçe.
+- **K-02 — Adlandırma:** Kod İngilizce; fıkhi terimler domain'de kendi adlarıyla kalır (`Kaza`, `Mazeret`, `Vitir`), çevrilmeye zorlanmaz. Vakit adları da kendi adlarıyla kalır (`imsak`, `gunes`, `ogle`, `ikindi`, `aksam`, `yatsi`). Kullanıcıya görünen tüm metinler `strings.xml`'de, Türkçe.
 - **K-03 — Kotlin deyimleri:** Durumlar için `sealed interface`, kimlikler için `value class`, null yerine anlamlı tipler. `!!` kullanılmaz.
 - **K-04 — Fonksiyonlar küçük ve tek işlidir.** Uzun fonksiyon, bölünmesi gerektiğine işarettir.
 - **K-05 — Yorum "neden"i açıklar, "ne"yi değil.** Fıkhi kural uygulayan her fonksiyon, karar tablosundaki ilgili satıra veya SRS'teki BR numarasına referans verir.
-- **K-06 — Sihirli sayı yok.** Fıkhi sayılar `RuleSet`'te (M-21), diğer sabitler adlandırılmış sabitlerde.
+- **K-06 — Sihirli sayı yok.** Fıkhi sayılar `RuleSet`'te (M-21), diğer sabitler adlandırılmış sabitlerde. Testlerdeki beklenen değerler bu kuralın dışındadır: test, beklentiyi belgeden olduğu gibi yazar.
 
 ## 8. Test ilkeleri (K)
 
 - **K-10 — Test piramidi:** Testlerin çoğu `:core:domain` birim testleri; ardından Room/geçiş entegrasyon testleri; en üstte kritik akışlar için az sayıda UI testi.
-- **K-11 — Domain'de TDD.** Karar tablosunun her satırı parametreli bir testtir; önce test, sonra kod.
-- **K-12 — Sınır ve değişmez testleri.** Tam 72./240. saat, vaktin son dakikası, yaz saati geçişi; "borç asla negatif olmaz" gibi değişmezler.
+- **K-11 — Domain'de TDD.** Karar tablosunun her geçerli satırı en az bir testle sınanır; önce test, sonra kod. Test, KT kimliğini ya fonksiyon adının başında (`KT41_...`) ya da bir `@ParameterizedTest`'in `Arguments.argumentSet` adının başında (`"KT-19 ..."`) taşır. Aynı türden satırlar (ör. bir kuralın sınır dakikaları) tek bir parametreli testte, her satır ayrı bir `argumentSet` olarak toplanabilir. Bu iki biçim dışındaki yazımlar (yorum, `@DisplayName`) KT kimliği sayılmaz (K-16).
+- **K-12 — Sınır ve değişmez testleri.** Tam 72./240. saat, vaktin son dakikası, yaz saati geçişi; "borç asla negatif olmaz" gibi değişmezler. Değişmezler ek bir kütüphane olmadan parametreli testlerle sınanır.
 - **K-13 — Test adları davranışı anlatır** (ör. "ögle vakti girmeden işaretleme reddedilir").
 - **K-14 — Sahte (fake) tercih edilir.** Repository'ler için bellek içi sahte uygulamalar yazılır; mock kütüphanesi yalnızca gerektiğinde.
+- **K-15 — Kapsam kapısı.** `:core:domain`'in satır kapsamı JaCoCo ile ölçülür ve %90'ın altına düşerse `ciCheck` başarısız olur (NFR-MNT-01). Eşik `ProjectConfig`'tedir. Sınıf ya da paket ölçümden hariç tutulmaz; kapsam yeterli değilse eksik test yazılır. Dal (branch) kapsamı raporlanır, kapı yalnızca satır kapsamına bakar.
+- **K-16 — KT izlenebilirlik kapısı.** `ciCheck`, `docs/karar-tablosu.md`'deki geçerli KT satırlarını (kaldırılmış satırlar hariç) okur ve `:core:domain` testlerindeki KT kimlikleriyle (K-11'deki iki biçim) karşılaştırır. Kök `build.gradle.kts`'teki **bekleyen KT listesi**, henüz kartı gelmemiş satırları tutar. Kapı iki yönlüdür ve şu durumlarda başarısız olur:
+  - geçerli bir satırın ne testi var ne de listede,
+  - testi yazılmış bir satır hâlâ listede,
+  - listede ya da bir testte geçen kimlik tabloda geçerli bir satır değil (ör. kaldırılmış KT-14),
+  - tablodan hiç satır okunamadı,
+  - `:core:domain` testlerinde `@Disabled` var.
+
+  Bir Faz 2 kartı kapsadığı kimlikleri listeden siler. Listeye kimlik eklemek ya da kartın söylemediği bir kimliği silmek planlama kararıdır. Faz 2 bittiğinde liste boştur; karar tablosuna yeni bir satır eklenirse kapı onu, testi yazılana kadar kırmızıya çevirir.
+- **K-17 — Sabit referans gün.** Domain testleri karar tablosundaki fikstürü kullanır: imsak 05:30, güneş 07:00, öğle 12:30, ikindi 15:30, akşam 18:00, yatsı 19:30, ertesi imsak 05:30; Europe/Istanbul. Fikstür test kaynaklarındaki `ReferenceDay` yardımcısındadır; G1 = 2 Mart 2026 Pazartesi, G5 cumadır. Testler gerçek tarihe, cihaz saatine ve sistemin saat dilimine bağlı olmaz.
 
 ## 9. Kaçınılacaklar (kontrol listesi)
 
@@ -132,9 +146,12 @@ PR'dan önce kontrol:
 - [ ] Modül build dosyasında SDK seviyesi, `compileOptions` ya da JVM hedefi tekrar yazılmamış; ortak ayar convention plugin'de (M-07)
 - [ ] Dışarıya değiştirilebilir akış açılmamış (M-10)
 - [ ] İş yapmayan use case veya gereksiz arayüz eklenmemiş (M-22, P-05)
-- [ ] Doğrudan saat çağrısı yok, `Clock` kullanılmış (M-23)
+- [ ] Doğrudan saat ya da saat dilimi çağrısı yok, `Clock` kullanılmış (M-23)
+- [ ] Kural fonksiyonu ayarı ve `RuleSet`'i parametre olarak alıyor, metin değil tipli sonuç döndürüyor (M-25)
 - [ ] `GlobalScope`, `!!`, sihirli sayı yok (P-12, K-03, K-06)
 - [ ] Yeni fıkhi davranış karar tablosuna/SRS'e bağlanmış ve testli (K-05, K-11)
+- [ ] Kapsanan KT kimlikleri bekleyen listeden silinmiş; `@Disabled` yok (K-16)
+- [ ] `:core:domain` satır kapsamı %90 veya üstü; hiçbir sınıf ölçümden hariç değil (K-15)
 - [ ] P0 dışı özellik veya kütüphane eklenmemiş (P-03)
 - [ ] ktlint temiz; Android Lint'te bilinen uyarılar listesi dışında uyarı yok; `ciCheck` yeşil (K-01)
 
@@ -152,6 +169,9 @@ PR'dan önce kontrol:
 | `IAsyncEnumerable` / Rx `IObservable` | `Flow` / `StateFlow` |
 | MediatR handler | Use case sınıfı |
 | xUnit / NUnit | JUnit Jupiter (JUnit 6) |
+| xUnit `[Theory]` + `[MemberData]` (`TheoryData`) | `@ParameterizedTest` + `@MethodSource` (`Arguments.argumentSet`) |
+| `TimeProvider` / `ISystemClock` | `java.time.Clock` (M-23) |
+| coverlet + ReportGenerator, kapsam eşiği | JaCoCo (`jacocoTestReport`, `jacocoTestCoverageVerification`; K-15) |
 | Azure DevOps / GitHub Actions pipeline | GitHub Actions (`.github/workflows/ci.yml`, `ciCheck`) |
 | Branch policy (zorunlu build doğrulaması) | GitHub ruleset (`main` koruması, zorunlu CI kontrolü) |
 | Discriminated union / `record` | `sealed interface` / `data class` |
@@ -168,5 +188,6 @@ PR'dan önce kontrol:
 | 1.1 | 30 Ekim 2026 | K-01: linter ktlint olarak seçildi; kontrol listesine ktlint maddesi ve eşleme tablosuna karşılığı eklendi; CLAUDE.md'ye atıf |
 | 1.2 | 1 Kasım 2026 | M-07 (convention plugin'ler), M-08 (derleme sırasında bağımlılık denetimi) ve M-09 (modül adları) eklendi. K-01'e test ve Compose fonksiyonları için ktlint adlandırma istisnası yazıldı. Kontrol listesi ve .NET eşleme tablosu güncellendi. Uygulama: görev kartı F1-02 |
 | 1.3 | 1 Kasım 2026 | JVM hedefi Java 11'den 17'ye, test çatısı JUnit 5'ten 6'ya çıktı (JUnit 6 Java 17 ister). Kod ve test yazımı değişmez; değerler yalnızca `ProjectConfig` ve catalog'da. Uygulama: görev kartı F1-03 |
-| 1.5 | 1 Kasım 2026 | K-01: sürüm güncelliği denetimleri (`GradleDependency`, `NewerVersionAvailable`, `AndroidGradlePluginVersion`) zamana bağlı oldukları için lint kapısının dışına alındı; `AndroidGradlePluginVersion` bilinen uyarılar tablosundan çıktı. Gerekçe: F1-04 Adım 0'da bu uyarının çalıştırmadan çalıştırmaya görünüp kaybolduğu ölçüldü |
 | 1.4 | 1 Kasım 2026 | K-01'e bilinen lint uyarıları tablosu ve iki yönlü lint kapısı kuralı eklendi; "uyarı sayısı sıfır" hedefi "bilinen liste dışında uyarı yok" olarak netleşti. M-07 tablosuna `namaztakibi.android.hilt` eklendi. .NET eşlemesine CI ve dal koruması eklendi. Uygulama: görev kartı F1-04 |
+| 1.5 | 1 Kasım 2026 | K-01: sürüm güncelliği denetimleri (`GradleDependency`, `NewerVersionAvailable`, `AndroidGradlePluginVersion`) zamana bağlı oldukları için lint kapısının dışına alındı; `AndroidGradlePluginVersion` bilinen uyarılar tablosundan çıktı. Gerekçe: F1-04 Adım 0'da bu uyarının çalıştırmadan çalıştırmaya görünüp kaybolduğu ölçüldü |
+| 1.6 | 2 Kasım 2026 | Faz 2 başlangıcı. M-25 (kural motoru sözleşmesi: girdiler parametre, çıktı tipli, metin yok) eklendi. M-21: `RuleSet.HANEFI` ve sürüm kimliği. M-23: `ZoneId.systemDefault()` yasağı. K-11: KT kimliğini taşıyan iki test biçimi (fonksiyon adı ve `argumentSet`). K-15 (JaCoCo ile %90 satır kapsamı kapısı), K-16 (iki yönlü KT izlenebilirlik kapısı ve bekleyen KT listesi) ve K-17 (sabit referans gün, G1 = 2 Mart 2026) eklendi. K-02 vakit adları, K-06 test beklentileri. M-07 tablosu, kontrol listesi ve .NET eşlemesi güncellendi; sürüm tablosu sıraya konuldu. Uygulama: görev kartı F2-01 |

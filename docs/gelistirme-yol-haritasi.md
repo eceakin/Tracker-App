@@ -1,6 +1,6 @@
 # Geliştirme Yol Haritası — Namaz & Kaza Takip
 
-26 Ekim 2026 · @ece · Son güncelleme: 1 Kasım 2026 (F1-03 tamamlandı; F1-04 kapsamı: Hilt, CI, lint kapısı, `main` koruması)
+26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (Faz 2 kart planı F2-01 – F2-13; F1-05 Adım 0 onaylandı, cihaz denemeleri ertelendi)
 
 ## Özet
 
@@ -42,8 +42,8 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 | F1-01 | Paket adı `com.eceakin.namaztakibi`, ktlint, saf Kotlin `:core:domain` ve ilk test (BR-01) | Tamamlandı (30 Ekim 2026) |
 | F1-02 | Depo hijyeni, kütüphane sürümleri, lint uyarıları, `build-logic` convention plugin'leri, boş modüller, bağımlılık denetimi, README | Tamamlandı (1 Kasım 2026) |
 | F1-03 | Araç zinciri yükseltmesi: Gradle 9.6.1, AGP 9.5, Kotlin 2.4, compileSdk 37.1 ve targetSdk 37, Java 17, JUnit 6, geri tutulan kütüphaneler. Lint 9 → 7 uyarı; kalanlar bilinen istisna (mimari K-01) | Tamamlandı (1 Kasım 2026) |
-| F1-04 | Hilt (KSP) ve `namaztakibi.android.hilt` convention plugin'i, GitHub Actions CI (`ciCheck`), bilinen uyarı listesine dayalı lint kapısı, `main` dalının korunması | Hazır |
-| F1-05 | Risk prototipi: widget'tan işaretleme ve pencereli hatırlatma, Samsung ve Xiaomi'de deneme | Bekliyor |
+| F1-04 | Hilt 2.60.1 (KSP 2.3.13) ve `namaztakibi.android.hilt`, GitHub Actions CI (`ciCheck`), iki yönlü lint kapısı (sürüm güncelliği denetimleri kapı dışı, mimari K-01 1.5), `main` ruleset'i. İlk CI çalışmasında `sdkmanager` PATH'te olmadığı için kırıldı; `$ANDROID_HOME` ile düzeltildi | Tamamlandı (1 Kasım 2026) |
+| F1-05 | Risk prototipi (spike, `main`'e birleşmez): Glance widget'ında geri sayım ve tek dokunuşla işaretleme, üç alarm türünün (pencereli, Doze'da çalışan, kesin) gecikme ölçümü, yeniden başlatma (kilit açılmadan dahil), Samsung pil kısıtları, bildirim eylemi. Cihazlar: API 37 emülatörü ve Samsung Galaxy S23 FE. Xiaomi cihazı yok; risk olarak kayıtlı | Adım 0 onaylandı (1 Kasım 2026). Cihaz denemeleri 9 Kasım haftasına ertelendi (tahmin; Ece'nin uygun günlerine bağlı). Faz 2 ile paralel yürür; sonuçlar Faz 5 ekranlarından önce elde olmalı |
 
 | Modül | İçerik | Bağımlılık kuralı |
 | --- | --- | --- |
@@ -59,18 +59,46 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 - [x] **Paket adı:** `com.eceakin.namaztakibi` (F1-01). `com.example` Play Store'da kabul edilmez ve yayından sonra `applicationId` değiştirilemez.
 - [x] **Modül yapısı:** Boş modüller, `build-logic` convention plugin'leri (mimari M-07) ve derleme sırasında bağımlılık denetimi (M-08). F1-02.
 - [x] **Araç zinciri:** Güncel AGP, Gradle ve Kotlin; compileSdk ve targetSdk 37 (Android 17); Java 17 hedefi. Yeni bir hedef SDK'nın davranış değişiklikleri ilgili özelliğin fazında (ör. alarmlar Faz 6) ayrıca değerlendirilir. F1-03.
-- [ ] **Test araçları:** JUnit Jupiter (domain; F1-01'de JUnit 5 ile kuruldu, F1-03'te JUnit 6), Robolectric ve Room test yardımcıları (data; Faz 4), Compose UI testleri (feature; Faz 5).
-- [ ] **Kod kalitesi:** ktlint kuruldu (F1-01), kök betikler ve `build-logic` kapsandı (F1-02). Android Lint 18 → 9 (F1-02) → 7 uyarı (F1-03). Kalan 7 uyarı mimari K-01'de bilinen istisna olarak kayıtlı; F1-04'teki lint kapısı bunların dışındaki her yeni uyarıyı reddeder.
-- [ ] **CI:** GitHub Actions'ta her Pull Request'te ve `main`'e her birleştirmede tek komut (`ciCheck`): ktlint, birim testleri, Android Lint ve lint kapısı, derleme. F1-04.
-- [ ] **Hilt:** KSP ile, `namaztakibi.android.hilt` convention plugin'i üzerinden; Faz 1'de yalnızca `:app`'e uygulanır. F1-04.
-- [ ] **Depo düzeni:** README, `CLAUDE.md`, `docs/` (proje belgelerinin kopyası, `docs/tasks/` görev kartları ve raporları) ve `main` + kısa ömürlü dal akışı (her iş ayrı dalda, Pull Request ile "Squash and merge"; `main` GitHub ruleset'iyle korunur: doğrudan push yok, birleştirme yalnızca PR ile ve CI yeşilken; F1-04). `.idea/` depoda tutulmaz. Karar kayıtları (ADR, `docs/adr/`) yazılmaz; kararlar proje belgelerinde (karar tablosu, SRS, mimari ilkeler) durur. Bu, 29 Ekim 2026'da alınan bir karardır (SRS 1.0-taslak.9'da NFR-MNT-03 kaldırıldı). README ve `.idea/` düzenlemesi F1-02.
-- [ ] **Risk prototipi:** Faz 1'in sonunda bir günlük, atılabilir bir "widget'tan işaretle + pencereli hatırlatma" denemesi yap ve iki farklı üreticinin cihazında dene. Bu, projenin ana farkının teknik olarak mümkün olduğunu en baştan gösterir. Aynı prototipte widget'ın işleyen geri sayımı ve "ana ekrana ekle" penceresi de Xiaomi ve Samsung'da denenir (ekran taslakları Tur 5).
+- [ ] **Test araçları:** JUnit Jupiter (domain; F1-01'de JUnit 5 ile kuruldu, F1-03'te JUnit 6), JaCoCo ile domain kapsam ölçümü (F2-01), Robolectric ve Room test yardımcıları (data; Faz 4), Compose UI testleri (feature; Faz 5).
+- [x] **Kod kalitesi:** ktlint kuruldu (F1-01), kök betikler ve `build-logic` kapsandı (F1-02). Android Lint 18 → 9 (F1-02) → 7 uyarı (F1-03). Bilinen uyarılar mimari K-01'de kayıtlı; F1-04'teki lint kapısı bunların dışındaki her yeni uyarıyı reddeder.
+- [x] **CI:** GitHub Actions'ta her Pull Request'te ve `main`'e her birleştirmede tek komut (`ciCheck`): ktlint, birim testleri, Android Lint ve lint kapısı, derleme. F1-04.
+- [x] **Hilt:** KSP ile, `namaztakibi.android.hilt` convention plugin'i üzerinden; Faz 1'de yalnızca `:app`'e uygulanır. F1-04.
+- [x] **Depo düzeni:** README, `CLAUDE.md`, `docs/` (proje belgelerinin kopyası, `docs/tasks/` görev kartları ve raporları) ve `main` + kısa ömürlü dal akışı (her iş ayrı dalda, Pull Request ile "Squash and merge"; `main` GitHub ruleset'iyle korunur: doğrudan push yok, birleştirme yalnızca PR ile ve CI yeşilken; F1-04). `.idea/` depoda tutulmaz. Karar kayıtları (ADR, `docs/adr/`) yazılmaz; kararlar proje belgelerinde (karar tablosu, SRS, mimari ilkeler) durur. Bu, 29 Ekim 2026'da alınan bir karardır (SRS 1.0-taslak.9'da NFR-MNT-03 kaldırıldı). README ve `.idea/` düzenlemesi F1-02.
+- [ ] **Risk prototipi (F1-05):** Xiaomi cihazı şimdilik yok; Xiaomi denemesi Faz 6'ya ya da kapalı test grubundaki bir Xiaomi kullanıcısına kaldı (risk tablosunda). Atılabilir bir "widget'tan işaretle + hatırlatma" denemesi; emülatörde ve Samsung S23 FE'de. Aynı prototipte widget'ın işleyen geri sayımı ve "ana ekrana ekle" penceresi de denenir (ekran taslakları Tur 5).
 
 **Bitti tanımı:** Boş modüllerle proje CI'da derleniyor, ktlint temiz, Android Lint'te bilinen istisnalar dışında uyarı yok, bağımlılık denetimi etkin ve `:core:domain`'de örnek bir test geçiyor; risk prototipi iki üreticinin cihazında denenmiş.
+
+**Durum (2 Kasım 2026):** F1-01 – F1-04 tamamlandı. Faz 1, F1-05 raporu gelip K1–K8 kararları verilene kadar açık kalır. Faz 2 bu ölçümlere bağlı olmadığı için paralel başladı.
 
 ## Faz 2 — Domain modeli ve kural motoru (TDD)
 
 **Amaç:** Uygulamanın kalbini, ekran olmadan ve tamamen testlerle yazmak. Kural motoru saf fonksiyonlardan oluşur ve hiçbir zaman veri değiştirmez; yalnızca "öneri" döndürür, kararı kullanıcı verir. Bu, "şüphede sor" ilkesinin koddaki karşılığıdır.
+
+**Kartlar** (depoda `docs/tasks/`). Karar tablosunun 101 geçerli satırı kartlara bölündü; her satır tam bir kartta (3 + 18 + 12 + 9 + 16 + 15 + 8 + 5 + 2 + 5 + 8 = 101). KT-14 kaldırıldığı için hiçbir kartta yok. Sıra bağımlılığa göredir; bir kart öncekiler `main`'e birleşmeden başlamaz.
+
+| Kart | Kapsam | KT satırları | Kurallar | Durum |
+| --- | --- | --- | --- | --- |
+| F2-01 | Temel model ve test altyapısı: `RuleSet.HANEFI`, `PrayerTimesDay`, referans gün fikstürü (`ReferenceDay`), JaCoCo kapsam kapısı (%90), iki yönlü KT izlenebilirlik kapısı ve bekleyen KT listesi | — | BR-01, M-21, M-23, M-25, K-15 – K-17 | Kart yazıldı (2 Kasım 2026) |
+| F2-02 | Vakit hesapları: namaz günü (imsakta başlar), şu anki vakit, vakit aralıkları `[başlangıç, bitiş)`, "kaçırıldı" anları, kerahat pencereleri; yaz saati olan bir bölgede geçiş günü testleri | — (BR adlı sınır testleri) | BR-02, BR-04, BR-07, NFR-CMP-02 | Bekliyor |
+| F2-03 | Kaza defteri: borç ekleme ve kılınan kaza kayıtları (append-only), kalan borcun kayıtlardan hesabı, düzeltme kaydı, borcun asla negatif olmaması, vakit seçiminin zorunluluğu | KT-35, 36, 81 (3) | BR-00, BR-09, FR-KAZ-01, 02, 04, 05 | Bekliyor |
+| F2-04 | Günlük işaretleme ve kaçırıldı önerileri: vakti girmeyen kalem, vitir–yatsı bağı, kaçırıldı önerisi, otomatik ekleme, geri alma, geçmiş günde "vaktinde / kaza olarak kıldım", cuma, bayram | KT-01 – 13, 15 – 18, 34 (18) | BR-02, 03, 04, 08, 09 | Bekliyor |
+| F2-05 | Kerahatte kaza ve sefer: üç pencerenin sınır dakikaları, ikindi istisnası, pencerenin `RuleSet`'ten gelmesi, seferde kaçan namazın rekâtı (P1) | KT-19 – 27, 91, 32, 33 (12) | BR-07, BR-18 | Bekliyor |
+| F2-06 | Tertip notu ve vakit darlığı formülü | KT-28 – 31, 82 – 84, 92, 93 (9) | BR-17 | Bekliyor |
+| F2-07 | Mazeret başlangıcı ve bitişi: `MazeretPeriod`, vakit içinde başlayan mazeret, gusül + tekbir hesabı, tam 240./960. saat istisnası, yatsıda biten mazerette vitir, geriye dönük bitiş, gusül aralığı | KT-37 – 51, 90 (16) | BR-10, 11, 12 | Bekliyor |
+| F2-08 | Mazeret süreleri ve alışkanlık: 72/240/960 saat sınırları, istihâze sayımı, alışkanlığın tek dönemde güncellenmesi ve yuvarlaması, 10 günü aşan dönem, mazeret önerilerinin otomatik eklemeye girmemesi | KT-52 – 61, 80, 87 – 89, 94 (15) | BR-13, 14, 15 | Bekliyor |
+| F2-09 | Ara temizlik ve 15 günlük temizlik: dönemin yeniden açılması, onaylanmış borçların geri alınmasının sorulması, birleşik dönemin 240 saati aşması, nifasın 960 saatlik penceresi, "uyarılı" kayıt | KT-62, 63, 95 – 98, 101, 102 (8) | BR-15, BR-16 | Bekliyor |
+| F2-10 | Hatırlatma anı: vakit sonundan X dk önce, işaretlenen vakitte iptal, yatsı ve vitir için tek hatırlatma, mazerette hatırlatma yok. Yalnızca anın hesabı; alarmı kurmak Faz 6 | KT-64 – 68 (5) | BR-05 | Bekliyor |
+| F2-11 | Gün anlık kopyası: `DaySnapshot`, ayar değişikliğinin geçmişi yeniden hesaplamaması, cinsiyet değişince mazeret kayıtlarının korunması | KT-69, 70 (2) | BR-21 | Bekliyor |
+| F2-12 | Baygınlık (P1): vakti çıkan farzların sayımı, altıncı farzda namazların düşmesi, narkoz | KT-78, 79, 85, 86, 100 (5) | BR-22 | Bekliyor |
+| F2-13 | Borç hesaplayıcı (P1): hicrî takvimle bulûğ tarihi, alt sınırlar, 14 yaş önerisi, gün × 6 hesabı. Bu kartla bekleyen KT listesi boşalır | KT-71 – 77, 99 (8) | BR-19, BR-20 | Bekliyor |
+
+**Faz 2'nin çalışma kuralları** (mimari M-25, K-11, K-15 – K-17; `CLAUDE.md` Bölüm 8):
+
+- Her kart TDD ile ilerler: testler önce yazılır ve kırmızı görülür, sonra kod yazılır.
+- Her KT satırı en az bir testle sınanır; test KT kimliğini fonksiyon adında ya da `argumentSet` adında taşır.
+- `ciCheck` iki kapı içerir: `:core:domain` satır kapsamı en az %90 ve iki yönlü KT izlenebilirlik kapısı. Bir kart, kapsadığı kimlikleri kök `build.gradle.kts`'teki bekleyen KT listesinden siler. F2-13 bittiğinde liste boştur ve bitti tanımının "tüm senaryolar yeşil" maddesi CI tarafından denetlenmiş olur.
+- P1 satırları (KT-32, 33, 71 – 79, 85, 86, 99, 100) bitti tanımı gereği Faz 2'dedir ve sona konmuştur.
+- **Bilinen risk (F2-13):** Domain testleri masaüstü JDK'da çalışır; Android'in `HijrahChronology` uygulamasının aynı Ümmü'l-Kurâ verisini verdiği doğrulanmadı. F2-13 Adım 0'da araştırılır.
 
 **Temel varlıklar.** Alanların bağlayıcı listesi SRS Bölüm 6.1'deki veri sözlüğüdür; aşağıdaki tablo onun özetidir.
 
@@ -82,16 +110,18 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 | `MazeretPeriod` | tür (hayız / nifas), başlangıç anı, bitiş anı, kanama aralıkları (ara temizliği olan dönemde birden çok), uyarılı mı |
 | `PrayerTimesDay` | ilçe, tarih, imsak, güneş, öğle, ikindi, akşam, yatsı, kaynak (Diyanet / tahmini) |
 | `DaySnapshot` | tarih, o güne ait ayarların ve kural seti sürümünün anlık kopyası (BR-21) |
-| `RuleSet` | mezhep parametreleri: namaz listesi, hayız 72/240 saat, nifas 960 saat, temizlik 15 gün, kerahat dakikaları 45/45/45, tertip sınırı 6, rekât süresi 2 dk, gusül aralığı 5–30 dk, tekbir 1 dk, baygınlıkta namazların düştüğü eşik: 6. farz vaktin çıkışı (BR-22) |
+| `RuleSet` | mezhep parametreleri: rekât sayıları, hayız 72/240 saat, nifas 960 saat, temizlik 15 gün, kerahat dakikaları 45/45/45, tertip sınırı 6, rekât süresi 2 dk, gusül aralığı 5–30 dk (varsayılan 15), tekbir 1 dk, alışkanlık girilmemişse 10 gün, sefer rekâtı, bulûğ yaşları 12/9 ve öneri 14, baygınlıkta namazların düştüğü eşik: 6. farz vaktin çıkışı (BR-22) |
 
-- [ ] **Saat bağımlılığını enjekte et.** Her fonksiyon `Clock` alır; zamanlar `Instant` + `ZoneId` ile tutulur. Yurt dışında yaz saati geçişleri bu sayede doğru çalışır.
-- [ ] **Vakit fonksiyonları:** şu anki vakit ve namaz günü, işaretlenebilir mi, kerahat vaktinde mi, "kaçırıldı" sınırı, hatırlatma anı.
-- [ ] **Mazeret fonksiyonları:** başlangıç ve bitişte hangi vaktin borç olabileceği (gusül + tekbir hesabı dahil), 72 saat altı ve 240 saat üstü, alışkanlık güncellemesi, ara temizlikte dönem birleştirme (hayızda 240, nifasta 960 saat), 15 günlük temizlik kontrolü.
-- [ ] **Kaza fonksiyonları:** borç ekleme ve düşme, tertip bilgi notu (farz borcu 1–5, vakit darlığı formülü), kerahatte kaza engeli, seferde rekât sayısı, baygınlıkta vakti çıkan farzların sayımı.
-- [ ] **Borç hesaplayıcı:** doğum tarihi → hicrî takvimle bulûğ tarihi, gün sayısı × 6, mazeret günlerinin düşülmesi.
-- [ ] **Testler:** Faz 0'daki karar tablosunun her satırı bir parametreli test. Ek olarak sınır testleri (tam 72. ve 240. saat, vaktin son dakikası) ve değişmezler (borç asla negatif olmaz).
+- [ ] **Saat bağımlılığını enjekte et.** Her fonksiyon `Clock` alır; zamanlar `Instant` + `ZoneId` ile tutulur. Yurt dışında yaz saati geçişleri bu sayede doğru çalışır. (F2-01, F2-02)
+- [ ] **Vakit fonksiyonları:** şu anki vakit ve namaz günü, işaretlenebilir mi, kerahat vaktinde mi, "kaçırıldı" sınırı, hatırlatma anı. (F2-02, F2-04, F2-10)
+- [ ] **Mazeret fonksiyonları:** başlangıç ve bitişte hangi vaktin borç olabileceği (gusül + tekbir hesabı dahil), 72 saat altı ve 240 saat üstü, alışkanlık güncellemesi, ara temizlikte dönem birleştirme (hayızda 240, nifasta 960 saat), 15 günlük temizlik kontrolü. (F2-07 – F2-09)
+- [ ] **Kaza fonksiyonları:** borç ekleme ve düşme, tertip bilgi notu (farz borcu 1–5, vakit darlığı formülü), kerahatte kaza engeli, seferde rekât sayısı, baygınlıkta vakti çıkan farzların sayımı. (F2-03, F2-05, F2-06, F2-12)
+- [ ] **Borç hesaplayıcı:** doğum tarihi → hicrî takvimle bulûğ tarihi, gün sayısı × 6, mazeret günlerinin düşülmesi. (F2-13)
+- [ ] **Testler:** Faz 0'daki karar tablosunun her satırı en az bir test (KT kimliği test adında ya da `argumentSet` adında). Ek olarak sınır testleri (tam 72. ve 240. saat, vaktin son dakikası) ve değişmezler (borç asla negatif olmaz). İzlenebilirlik ve kapsam `ciCheck`'te denetlenir (F2-01).
 
-**Bitti tanımı:** Karar tablosundaki tüm senaryolar yeşil, `:core:domain` test kapsamı %90'ın üstünde, modülde tek bir Android import'u yok.
+**Bitti tanımı:** Karar tablosundaki tüm senaryolar yeşil (bekleyen KT listesi boş), `:core:domain` test kapsamı %90'ın üstünde, modülde tek bir Android import'u yok.
+
+**Durum (2 Kasım 2026):** Kart planı onaylandı (13 kart). F2-01 yazıldı.
 
 ## Faz 3 — Vakit verisi
 
@@ -144,7 +174,7 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 
 - [ ] **Ekran taslaklarından devredilenler:** %200 yazı boyutu ve TalkBack ile her ekranın ve iki widget'ın denenmesi (KS-NFR-07); açık ve koyu temada kontrast denetimi (KS-NFR-08). Fıkhi ekran metinleri hoca kontrolünden geçmeden `strings.xml`'e girmez (SRS Bölüm 10).
 - [ ] **Durum yönetimi:** Her ekranda tek bir `UiState` ve `StateFlow`; ekranlar yalnızca durumu çizer ve olay gönderir.
-- [ ] **Dil ve ton:** Suçlayıcı olmayan metinler ("kılmadın" yerine "bu vakit henüz işaretlenmedi"). Tüm metinler `strings.xml`'de, ileride çeviriye hazır.
+- [ ] **Dil ve ton:** Suçlayıcı olmayan metinler ("kılmadın" yerine "bu vakit henüz işaretlenmedi"). Tüm metinler `strings.xml`'de, ileride çeviriye hazır. Kural motorunun tipli sonuçları (M-25) bu katmanda metne çevrilir.
 - [ ] **Erişilebilirlik:** Büyük yazı tipi, TalkBack etiketleri, yeterli kontrast, koyu tema.
 - [ ] **Kullanılabilirlik testi:** Hedef kitleden 3 kişiye (biri yeni başlayan) onboarding'i ve bir günlük işaretlemeyi izleyerek yaptır.
 
@@ -163,7 +193,7 @@ Kaynak belgeler: 5te5-yorum-analizi.md, ozellik-listesi.md, fikhi-gereksinimler.
 
 **Hatırlatmalar**
 
-- [ ] **Kesin alarm izni:** Android 14'ten itibaren `SCHEDULE_EXACT_ALARM` yeni kurulumlarda varsayılan olarak reddedilmiş geliyor; `USE_EXACT_ALARM` ise yalnızca takvim ve çalar saat uygulamalarına açık. Bu yüzden "vakit çıkmadan X dk önce" hatırlatmaları en az 10 dakikalık pencereli alarmla (`setWindow`) kurulur. Kesin saat isteyen kullanıcıdan izin, ayarlar akışıyla istenir; reddederse pencereli alarma dönülür.
+- [ ] **Kesin alarm izni:** Android 14'ten itibaren `SCHEDULE_EXACT_ALARM` yeni kurulumlarda varsayılan olarak reddedilmiş geliyor; `USE_EXACT_ALARM` ise yalnızca takvim ve çalar saat uygulamalarına açık. Bu yüzden "vakit çıkmadan X dk önce" hatırlatmaları en az 10 dakikalık pencereli alarmla (`setWindow`) kurulur. Kesin saat isteyen kullanıcıdan izin, ayarlar akışıyla istenir; reddederse pencereli alarma dönülür. **Not:** `setWindow`'un Doze'da ertelenmesi F1-05'te ölçülüyor; bu madde F1-05 raporundaki K1 kararına göre güncellenecek.
 - [ ] **Bildirim izni:** Android 13 ve sonrasında `POST_NOTIFICATIONS` çalışma anında istenir; onboarding'in hatırlatma adımında.
 - [ ] **Yeniden zamanlama:** Cihaz yeniden başladığında, saat veya saat dilimi değiştiğinde ve uygulama güncellendiğinde tüm alarmlar yeniden kurulur.
 - [ ] **Bildirimde eylem:** "Kıldım" düğmesi bildirimi açmadan işaretler. Vakit zaten işaretlenmişse bildirim hiç gönderilmez; 5te5'teki "10 gündür yoksun" hatası böyle önlenir.
@@ -204,9 +234,10 @@ En yüksek iki risk dış bağımlılıklarda (Diyanet erişimi, Android arka pl
 | Risk | Olursa ne olur | Önlem |
 | --- | --- | --- |
 | Diyanet API erişimi alınamaz | Vakit kaynağı kalmaz | B planı Faz 0'da hazır: Adhan + Diyanet karşılaştırması. Vakit kaynağı bir arayüzün arkasında, değiştirmek tek modülü etkiler |
-| Widget veya alarm bazı cihazlarda güvenilmez | Uygulamanın ana farkı çöker | Faz 1 sonunda bir günlük "widget + hatırlatma" prototipi; iki farklı üreticide dene |
+| Widget veya alarm bazı cihazlarda güvenilmez | Uygulamanın ana farkı çöker | Faz 1 sonunda "widget + hatırlatma" prototipi (F1-05): emülatör ve Samsung S23 FE'de ölçüm. Xiaomi denemesi eksik: Faz 6'da ya da kapalı testte bir Xiaomi cihazında tekrarlanır |
 | Fıkhi bir kural yanlış uygulanır | Kullanıcı güveni ve ibadeti etkilenir | Karar tablosu + hoca kontrolü; motor asla sessizce borç yazmaz; her kayıt elle düzeltilebilir |
-| Kodlama ajanı kuralı yanlış yorumlar ya da testi beklentiye uydurur | Fıkhi hata sessizce koda girer | CLAUDE.md'de "dur ve sor" ve "beklentiyi değiştirme" kuralları; karar tablosu testleri sözleşmedir; her PR gözden geçirilir |
+| Kodlama ajanı kuralı yanlış yorumlar ya da testi beklentiye uydurur | Fıkhi hata sessizce koda girer | CLAUDE.md'de "dur ve sor" ve "beklentiyi değiştirme" kuralları; karar tablosu testleri sözleşmedir; KT izlenebilirlik kapısı eksik ya da devre dışı testi CI'da yakalar; her PR gözden geçirilir |
+| Hicrî takvim çevrimi cihazda farklı sonuç verir | Bulûğ tarihi (BR-19) 1–2 gün kayar | Sonuç zaten "yaklaşık" etiketli ve düzeltilebilir; Android'in `HijrahChronology` davranışı F2-13'te doğrulanır |
 | Veri kaybı | 5te5'in en ağır şikayeti tekrarlanır | Faz 4'teki geçiş testleri, ayrı hassas dosya, kurtarma ekranı |
 | Kapsam kayması | Proje bitmez | P0 donduruldu; her fazın bitti tanımı var; yeni fikir doğrudan P1/P2 listesine gider |
 | Kapalı test için 12 kişi bulunamaz | Yayın gecikir | Test grubunu Faz 5'te toplamaya başla |
