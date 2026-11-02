@@ -1,6 +1,7 @@
 package com.eceakin.namaztakibi.domain.times
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.rules.RuleSet
 import java.time.Clock
 import java.time.Instant
 
@@ -70,5 +71,41 @@ data class PrayerDayWindows(val day: PrayerTimesDay, val next: PrayerTimesDay) {
             else ->
                 CurrentVakit.Within(Prayer.YATSI, windowOf(Prayer.YATSI))
         }
+    }
+
+    /**
+     * Üç kerahat penceresi (BR-07); sıra `GUNES`, `ISTIVA`, `AKSAM`'dır.
+     *
+     * Süreler yalnızca [ruleSet]'ten okunur; kullanıcı ayarı yoktur.
+     */
+    fun kerahatWindows(ruleSet: RuleSet): List<KerahatWindow> = listOf(
+        KerahatWindow(
+            KerahatKind.GUNES,
+            TimeWindow(day.gunes, day.gunes.plus(ruleSet.kerahatAfterGunes))
+        ),
+        KerahatWindow(
+            KerahatKind.ISTIVA,
+            TimeWindow(day.ogle.minus(ruleSet.kerahatBeforeOgle), day.ogle)
+        ),
+        KerahatWindow(
+            KerahatKind.AKSAM,
+            TimeWindow(day.aksam.minus(ruleSet.kerahatBeforeAksam), day.aksam)
+        )
+    )
+
+    /**
+     * Verilen anın kerahat durumu (BR-07).
+     *
+     * An `[day.imsak, next.imsak)` içinde değilse başka bir namaz gününe aittir ve bu bir
+     * programlama hatasıdır. Pencerelerin birbiriyle çakışması burada denetlenmez.
+     */
+    fun kerahatStatus(clock: Clock, ruleSet: RuleSet): KerahatStatus {
+        val instant = clock.instant()
+        require(instant >= day.imsak && instant < next.imsak) {
+            "An bu namaz gününün dışında"
+        }
+
+        val inside = kerahatWindows(ruleSet).firstOrNull { instant in it.window }
+        return if (inside == null) KerahatStatus.None else KerahatStatus.Inside(inside)
     }
 }
