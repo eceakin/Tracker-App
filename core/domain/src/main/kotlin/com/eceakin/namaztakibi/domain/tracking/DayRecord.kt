@@ -31,6 +31,9 @@ data class DayRecord(val date: LocalDate, val marks: List<PrayerMark>) {
             }
         }
         marks.forEach { mark ->
+            require(mark.asKaza == (mark.operationId != null)) {
+                "Kaza işareti işlem kimliğiyle birlikte olmalı (DATA-05)"
+            }
             if (mark.asCuma) {
                 require(mark.prayer == Prayer.OGLE) {
                     "Cuma işareti yalnızca öğle kalemine konur (BR-08)"

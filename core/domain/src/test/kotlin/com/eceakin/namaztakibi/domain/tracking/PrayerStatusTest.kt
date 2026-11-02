@@ -2,6 +2,7 @@ package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
 import com.eceakin.namaztakibi.domain.kaza.KazaLedger
+import com.eceakin.namaztakibi.domain.kaza.OperationId
 import com.eceakin.namaztakibi.domain.settings.DaySettings
 import com.eceakin.namaztakibi.domain.testing.ReferenceDay
 import com.eceakin.namaztakibi.domain.times.PrayerDayWindows
@@ -124,7 +125,8 @@ class PrayerStatusTest {
                     prayer = prayer,
                     markedAt = ReferenceDay.at(1, "12:40"),
                     asCuma = false,
-                    asKaza = asKaza
+                    asKaza = asKaza,
+                    operationId = if (asKaza) OperationId("op1") else null
                 )
             )
         )

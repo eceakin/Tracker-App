@@ -20,6 +20,19 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
             "Kaza kayıt kimlikleri benzersiz olmalı"
         }
 
+        val operationPrayers = mutableMapOf<OperationId, Prayer>()
+        fun checkOperation(operationId: OperationId?, prayer: Prayer) {
+            if (operationId == null) {
+                return
+            }
+            val existing = operationPrayers.putIfAbsent(operationId, prayer)
+            require(existing == null || existing == prayer) {
+                "Bir işlemin kayıtları aynı kalemde olmalı (DATA-04)"
+            }
+        }
+        entries.forEach { checkOperation(it.operationId, it.prayer) }
+        performed.forEach { checkOperation(it.operationId, it.prayer) }
+
         val entriesById = entries.associateBy { it.id }
         val performedById = performed.associateBy { it.id }
         val correctedTargets = mutableSetOf<KazaRecordId>()

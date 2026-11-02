@@ -1,6 +1,7 @@
 package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.kaza.OperationId
 import com.eceakin.namaztakibi.domain.testing.ReferenceDay
 import java.time.LocalDate
 import org.junit.jupiter.api.assertThrows
@@ -102,7 +103,8 @@ class DayRecordTest {
             prayer = prayer,
             markedAt = ReferenceDay.at(1, "13:00"),
             asCuma = asCuma,
-            asKaza = asKaza
+            asKaza = asKaza,
+            operationId = if (asKaza) OperationId("op1") else null
         )
     }
 }
