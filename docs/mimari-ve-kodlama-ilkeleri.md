@@ -1,6 +1,6 @@
 # Mimari ve Kodlama İlkeleri — Namaz Takibi
 
-29 Ekim 2026 · @ece · Sürüm 1.6 (2 Kasım 2026: kural motoru sözleşmesi, kapsam ve KT izlenebilirlik kapıları, referans gün fikstürü)
+29 Ekim 2026 · @ece · Sürüm 1.7 (2 Kasım 2026: M-23'e ilçe saat dilimi kuralı)
 
 ## Amaç ve kullanım
 
@@ -65,7 +65,7 @@ Kaynak belgeler: gelistirme-yol-haritasi.md (Faz 1 modül yapısı), gereksinim-
 - **M-20 — Kural motoru saf fonksiyonlardan oluşur.** Girdi alır, öneri döndürür; yan etkisi yoktur, veri yazmaz. Kararı kullanıcı verir ("şüphede sor").
 - **M-21 — Kural parametreleri `RuleSet`'te durur.** Hanefî sayıları (72/240 saat, 40 gün, 15 gün, tertip 6, rekât sayıları ve süresi, bulûğ yaşları vb.) koda gömülmez; ürünün kural seti `RuleSet.HANEFI`'dir. İleride diğer mezhepler yeni bir `RuleSet` olarak eklenir. `RuleSet` bir sürüm kimliği taşır; gün anlık kopyası (BR-21) hangi kural setiyle değerlendirildiğini bu kimlikle kaydeder.
 - **M-22 — Use case yalnızca değer kattığında yazılır.** İçinde tek bir repository çağrısı olan, iş yapmayan use case açılmaz; böyle durumlarda ViewModel doğrudan repository arayüzünü kullanır.
-- **M-23 — Zaman dışarıdan verilir.** Her zaman bağımlı fonksiyon `Clock` alır; anlar `Instant` + `ZoneId` ile tutulur. `LocalDateTime.now()`, `ZoneId.systemDefault()` gibi doğrudan saat ve bölge çağrıları domain'de yasaktır.
+- **M-23 — Zaman dışarıdan verilir.** Her zaman bağımlı fonksiyon `Clock` alır; anlar `Instant` + `ZoneId` ile tutulur. `LocalDateTime.now()`, `ZoneId.systemDefault()` gibi doğrudan saat ve bölge çağrıları domain'de yasaktır. Takvim günü gerektiren hesaplarda (namaz günü, yerel saat) bölge ilçenin saat dilimidir (SRS DATA-03) ve fonksiyona ayrı bir `ZoneId` parametresi olarak verilir; `Clock`'un kendi bölgesi kural hesabında kullanılmaz. Gerekçe: üretimde `Clock` cihazın bölgesini taşır; yurt dışı bir ilçe seçmiş ya da seyahatteki bir kullanıcıda bu, namaz gününü yanlış güne kaydırır.
 - **M-24 — Hatalar tiplidir.** Beklenen iş sonuçları (ör. "vakit girmedi", "kerahat vakti") istisna değil, `sealed` sonuç tipleriyle döndürülür. İstisnalar yalnızca gerçekten beklenmeyen durumlar içindir (ör. tutarsız vakit verisiyle model kurmak).
 - **M-25 — Kural motoru sözleşmesi.** Karar tablosundaki her satır "ön koşul + olay → beklenen" biçimindedir; motor fonksiyonları da bu biçimi izler:
   - Girdi olarak durumu (kayıtlar, dönemler, borç kayıtları), olayı, `Clock`'u, `RuleSet`'i ve o günün ayarlarını parametre olarak alır. Global, singleton ya da "şu anki ayar" okumaz. Böylece her gün kendi tarihindeki ayarla değerlendirilir (BR-21) ve testler her girdiyi açıkça verir.
@@ -191,3 +191,4 @@ PR'dan önce kontrol:
 | 1.4 | 1 Kasım 2026 | K-01'e bilinen lint uyarıları tablosu ve iki yönlü lint kapısı kuralı eklendi; "uyarı sayısı sıfır" hedefi "bilinen liste dışında uyarı yok" olarak netleşti. M-07 tablosuna `namaztakibi.android.hilt` eklendi. .NET eşlemesine CI ve dal koruması eklendi. Uygulama: görev kartı F1-04 |
 | 1.5 | 1 Kasım 2026 | K-01: sürüm güncelliği denetimleri (`GradleDependency`, `NewerVersionAvailable`, `AndroidGradlePluginVersion`) zamana bağlı oldukları için lint kapısının dışına alındı; `AndroidGradlePluginVersion` bilinen uyarılar tablosundan çıktı. Gerekçe: F1-04 Adım 0'da bu uyarının çalıştırmadan çalıştırmaya görünüp kaybolduğu ölçüldü |
 | 1.6 | 2 Kasım 2026 | Faz 2 başlangıcı. M-25 (kural motoru sözleşmesi: girdiler parametre, çıktı tipli, metin yok) eklendi. M-21: `RuleSet.HANEFI` ve sürüm kimliği. M-23: `ZoneId.systemDefault()` yasağı. K-11: KT kimliğini taşıyan iki test biçimi (fonksiyon adı ve `argumentSet`). K-15 (JaCoCo ile %90 satır kapsamı kapısı), K-16 (iki yönlü KT izlenebilirlik kapısı ve bekleyen KT listesi) ve K-17 (sabit referans gün, G1 = 2 Mart 2026) eklendi. K-02 vakit adları, K-06 test beklentileri. M-07 tablosu, kontrol listesi ve .NET eşlemesi güncellendi; sürüm tablosu sıraya konuldu. Uygulama: görev kartı F2-01 |
+| 1.7 | 2 Kasım 2026 | M-23: takvim günü gerektiren hesaplarda bölge ilçenin saat dilimidir ve ayrı `ZoneId` parametresiyle verilir; `Clock`'un bölgesi kullanılmaz (SRS DATA-03). Uygulama: görev kartı F2-02 |
