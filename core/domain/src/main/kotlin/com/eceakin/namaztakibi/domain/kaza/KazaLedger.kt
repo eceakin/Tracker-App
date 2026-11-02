@@ -2,6 +2,7 @@ package com.eceakin.namaztakibi.domain.kaza
 
 import com.eceakin.namaztakibi.domain.Prayer
 import java.time.Clock
+import java.time.LocalDate
 
 /**
  * Kaza borcunun append-only defteri (M-31, SRS DATA-04).
@@ -175,6 +176,21 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
                 createdAt = clock.instant()
             )
         )
+    }
+
+    /**
+     * Bu tarih ve kalem için geri alınmamış bir `ONERI` ya da `OTOMATIK` kaydı var mı
+     * (DATA-05).
+     *
+     * `ELLE`, `HESAPLAYICI` ve `DUZELTME` kayıtları öneriyi kapatmaz.
+     */
+    fun hasOpenEntryFor(date: LocalDate, prayer: Prayer): Boolean = entries.any { entry ->
+        val hasOpenKind = entry.kind == KazaEntryKind.ONERI ||
+            entry.kind == KazaEntryKind.OTOMATIK
+        hasOpenKind &&
+            entry.sourceDate == date &&
+            entry.prayer == prayer &&
+            !isCorrected(entry.id)
     }
 
     companion object {

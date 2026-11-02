@@ -1,6 +1,8 @@
 package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.kaza.KazaLedger
+import com.eceakin.namaztakibi.domain.settings.DaySettings
 import com.eceakin.namaztakibi.domain.testing.ReferenceDay
 import com.eceakin.namaztakibi.domain.times.PrayerDayWindows
 import java.time.Clock
@@ -97,6 +99,18 @@ class PrayerStatusTest {
                         Prayer.OGLE,
                         asCuma = false,
                         PrayerDayWindows(ReferenceDay.times(2), ReferenceDay.times(3)),
+                        ReferenceDay.clockAt(2, "13:00")
+                    )
+                }
+            ),
+            Arguments.argumentSet(
+                "M-24 evaluateMissed yanlis gun",
+                Executable {
+                    DayRecord.empty(ReferenceDay.date(1)).evaluateMissed(
+                        PrayerDayWindows(ReferenceDay.times(2), ReferenceDay.times(3)),
+                        KazaLedger.EMPTY,
+                        DaySettings(autoAddDebt = false),
+                        ReferenceDay.at(1, "00:00"),
                         ReferenceDay.clockAt(2, "13:00")
                     )
                 }

@@ -1,9 +1,14 @@
 package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.kaza.KazaEntryKind
+import com.eceakin.namaztakibi.domain.kaza.KazaLedger
+import com.eceakin.namaztakibi.domain.kaza.KazaWrite
+import com.eceakin.namaztakibi.domain.settings.DaySettings
 import com.eceakin.namaztakibi.domain.times.PrayerDayWindows
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -125,6 +130,59 @@ data class DayRecord(val date: LocalDate, val marks: List<PrayerMark>) {
             return UnmarkDecision.Blocked(UnmarkBlock.KAZA_MARK_NEEDS_GROUP_UNDO)
         }
         return UnmarkDecision.Allowed(RecordWrite.Clear(date = date, prayer = prayer))
+    }
+
+    /**
+     * Vakti çıkmış, işaretlenmemiş kalemler için öneri/otomatik ekleme listesi
+     * (FR-KAZ-03, BR-04, FR-ONB-05, DATA-05).
+     *
+     * Her kalem için sıra: işaretliyse yok; vakit çıkmadıysa yok; "kaçırıldı" anı takip
+     * başlangıcından önce **ya da ona eşitse** yok; defterde açık öneri/otomatik kayıt
+     * varsa yok; otomatik ekleme açıksa otomatik kayıt; aksi hâlde öneri. Liste
+     * [Prayer.entries] sırasındadır.
+     */
+    fun evaluateMissed(
+        windows: PrayerDayWindows,
+        ledger: KazaLedger,
+        settings: DaySettings,
+        trackingStart: Instant,
+        clock: Clock
+    ): List<MissedOutcome> {
+        require(windows.day.date == date) {
+            "Vakitler bu gün kaydına ait olmalı"
+        }
+
+        val now = clock.instant()
+        return Prayer.entries.mapNotNull { prayer ->
+            if (markOf(prayer) != null) {
+                return@mapNotNull null
+            }
+            val missedAt = windows.missedAt(prayer)
+            if (now < missedAt) {
+                return@mapNotNull null
+            }
+            if (missedAt <= trackingStart) {
+                return@mapNotNull null
+            }
+            if (ledger.hasOpenEntryFor(date, prayer)) {
+                return@mapNotNull null
+            }
+            if (settings.autoAddDebt) {
+                MissedOutcome.AutoAdd(
+                    KazaWrite.AddEntry(
+                        prayer = prayer,
+                        sourceDate = date,
+                        kind = KazaEntryKind.OTOMATIK,
+                        count = 1,
+                        corrects = null,
+                        missedInSefer = false,
+                        createdAt = now
+                    )
+                )
+            } else {
+                MissedOutcome.Suggest(date = date, prayer = prayer)
+            }
+        }
     }
 
     companion object {

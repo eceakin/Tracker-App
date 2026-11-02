@@ -1,6 +1,8 @@
 package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.kaza.KazaLedger
+import com.eceakin.namaztakibi.domain.settings.DaySettings
 import com.eceakin.namaztakibi.domain.settings.Gender
 import com.eceakin.namaztakibi.domain.testing.ReferenceDay
 import com.eceakin.namaztakibi.domain.times.PrayerDayWindows
@@ -186,7 +188,26 @@ class MarkPrayerTest {
 
     @Test
     fun KT18_FR_TRK_03_isaretGeriAlinir_vaktiCikincaOneri() {
-        val record = record1(mark(Prayer.OGLE, "12:40"))
+        val record = DayRecordFixture.apply(
+            DayRecordFixture.markedAtStart(
+                ReferenceDay.date(1),
+                windows1,
+                Prayer.SABAH,
+                Prayer.IKINDI,
+                Prayer.AKSAM,
+                Prayer.YATSI,
+                Prayer.VITIR
+            ),
+            listOf(
+                RecordWrite.Mark(
+                    date = ReferenceDay.date(1),
+                    prayer = Prayer.OGLE,
+                    markedAt = ReferenceDay.at(1, "12:40"),
+                    asCuma = false,
+                    asKaza = false
+                )
+            )
+        )
         val decision = record.decideUnmark(Prayer.OGLE)
 
         assertTrue(decision is UnmarkDecision.Allowed)
@@ -201,7 +222,16 @@ class MarkPrayerTest {
             PrayerStatus.BELIRSIZ,
             after.statusOf(Prayer.OGLE, windows1, ReferenceDay.clockAt(1, "12:45"))
         )
-        // Son adım (15:30'da evaluateMissed -> Suggest) A4'te eklenir.
+        assertEquals(
+            listOf(MissedOutcome.Suggest(ReferenceDay.date(1), Prayer.OGLE)),
+            after.evaluateMissed(
+                windows1,
+                KazaLedger.EMPTY,
+                DaySettings(autoAddDebt = false),
+                ReferenceDay.at(1, "00:00"),
+                ReferenceDay.clockAt(1, "15:30")
+            )
+        )
     }
 
     @ParameterizedTest(name = "{argumentSetName}")
