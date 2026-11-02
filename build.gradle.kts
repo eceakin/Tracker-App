@@ -348,8 +348,9 @@ val checkKtTraceability = tasks.register("checkKtTraceability") {
         val tableText = try {
             tableFile.readText(Charsets.UTF_8)
         } catch (exception: Exception) {
+            val reason = exception.message ?: exception.javaClass.name
             throw GradleException(
-                "KT kapısı: docs/karar-tablosu.md içinde KT satırı bulunamadı."
+                "KT kapısı: docs/karar-tablosu.md okunamadı: $reason."
             )
         }
 
@@ -420,7 +421,7 @@ val checkKtTraceability = tasks.register("checkKtTraceability") {
             .filter { it in validIds && it in ktPending }
             .sorted()
             .forEach { id ->
-                diffs += "KT kapısı: $id'in testi var ama bekleyen listede duruyor. " +
+                diffs += "KT kapısı: $id kimliğinin testi var ama bekleyen listede duruyor. " +
                     "Kimliği ktPending'den sil."
             }
 

@@ -53,44 +53,32 @@ class PrayerTimesDayTest {
         assertThrows<IllegalArgumentException> { DistrictId(value) }
     }
 
-    private fun baseDay(): PrayerTimesDay = PrayerTimesDay(
-        district = DistrictId(1),
-        date = LocalDate.of(2026, 3, 2),
-        imsak = Instant.parse("2026-03-02T02:30:00Z"),
-        gunes = Instant.parse("2026-03-02T04:00:00Z"),
-        ogle = Instant.parse("2026-03-02T09:30:00Z"),
-        ikindi = Instant.parse("2026-03-02T12:30:00Z"),
-        aksam = Instant.parse("2026-03-02T15:00:00Z"),
-        yatsi = Instant.parse("2026-03-02T16:30:00Z"),
-        origin = TimesOrigin.DIYANET
-    )
-
     private companion object {
         @JvmStatic
         fun siraliOlmayanVakitler(): List<Arguments> = listOf(
             Arguments.argumentSet(
                 "M-24 imsak ile gunes ayni",
-                Executable { baseDayForArguments().copy(imsak = baseDayForArguments().gunes) }
+                Executable { baseDay().copy(imsak = baseDay().gunes) }
             ),
             Arguments.argumentSet(
                 "M-24 gunes ile ogle ayni",
-                Executable { baseDayForArguments().copy(gunes = baseDayForArguments().ogle) }
+                Executable { baseDay().copy(gunes = baseDay().ogle) }
             ),
             Arguments.argumentSet(
                 "M-24 ogle ile ikindi ayni",
-                Executable { baseDayForArguments().copy(ogle = baseDayForArguments().ikindi) }
+                Executable { baseDay().copy(ogle = baseDay().ikindi) }
             ),
             Arguments.argumentSet(
                 "M-24 ikindi ile aksam ayni",
-                Executable { baseDayForArguments().copy(ikindi = baseDayForArguments().aksam) }
+                Executable { baseDay().copy(ikindi = baseDay().aksam) }
             ),
             Arguments.argumentSet(
                 "M-24 aksam ile yatsi ayni",
-                Executable { baseDayForArguments().copy(aksam = baseDayForArguments().yatsi) }
+                Executable { baseDay().copy(aksam = baseDay().yatsi) }
             )
         )
 
-        private fun baseDayForArguments(): PrayerTimesDay = PrayerTimesDay(
+        private fun baseDay(): PrayerTimesDay = PrayerTimesDay(
             district = DistrictId(1),
             date = LocalDate.of(2026, 3, 2),
             imsak = Instant.parse("2026-03-02T02:30:00Z"),
