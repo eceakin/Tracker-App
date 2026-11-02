@@ -1,6 +1,6 @@
 # Gereksinim Analizi Raporu (SRS) — Namaz & Kaza Takip v1.0
 
-26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (1.0-taslak.10, kaza defterinin veri modeli)
+26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (1.0-taslak.11, günlük kaydın durumu)
 
 ## Özet
 
@@ -252,12 +252,12 @@ Rakibin en ağır şikayetleri fonksiyondan değil güvenilirlikten geldiği iç
 
 | Varlık | Temel alanlar | Saklama yeri | Otomatik yedek |
 | --- | --- | --- | --- |
-| PrayerRecord | tarih, kalem (6), durum (kılındı / kılınmadı / mazeretli / belirsiz), işaretlenme anı, cuma mı, kaza olarak mı kılındı | Ana veritabanı | Evet |
+| PrayerRecord | tarih (namaz günü), kalem (6), işaretlenme anı, cuma mı, kaza olarak mı kılındı. Durum (kılındı / kılınmadı / mazeretli / belirsiz) saklanmaz, türetilir (DATA-05) | Ana veritabanı | Evet |
 | KazaEntry | kimlik, kalem, kaynak tarih (biliniyorsa), tür (elle / öneri / otomatik / hesaplayıcı / düzeltme), adet, düzelttiği kayıt (yalnızca geri alma düzeltmesinde), seferde kaçtı mı, oluşturulma anı | Ana veritabanı | Evet |
 | KazaPerformed | kimlik, kalem, kılınma anı | Ana veritabanı | Evet |
 | MazeretPeriod | tür (hayız / nifas), başlangıç anı, bitiş anı, kanama aralıkları (ara temizliği olan dönemde birden çok), uyarılı mı | Hassas veritabanı | Hayır |
 | PrayerTimesDay | ilçe, tarih, 6 vakit, kaynak (Diyanet / tahmini) | Önbellek tablosu | Hayır (yeniden indirilir) |
-| Settings | ilçe, cinsiyet, gusül süresi, hatırlatma ayarları, otomatik ekleme, âdet alışkanlığı ve son güncellenme kaynağı (elle / dönem) | DataStore | Evet (âdet alışkanlığı hariç) |
+| Settings | ilçe, cinsiyet, gusül süresi, hatırlatma ayarları, otomatik ekleme, âdet alışkanlığı ve son güncellenme kaynağı (elle / dönem), takip başlangıcı (onboarding'in tamamlandığı an; FR-ONB-05) | DataStore | Evet (âdet alışkanlığı hariç) |
 | DaySnapshot | tarih, o güne ait ayar ve kural seti sürümü | Ana veritabanı | Evet |
 
 - **DATA-01** Veri süresiz ve yalnızca cihazda tutulur.
@@ -270,6 +270,11 @@ Rakibin en ağır şikayetleri fonksiyondan değil güvenilirlikten geldiği iç
   - **Kalan borç** (kalem başına) = o kalemin KazaEntry adetlerinin toplamı − o kalemin KazaPerformed sayısı. Hiçbir zaman negatif olmaz (FR-KAZ-04).
   - **Geri alma** (FR-KAZ-05): Kayıt silinmez; karşı etkili bir düzeltme kaydı eklenir ve geri alınan kayda işaret eder. KazaEntry geri alınırsa düzeltmenin adedi kaydın adedinin eksi işaretlisidir; KazaPerformed geri alınırsa +1'dir. Bir kayıt yalnızca bir kez geri alınır. Düzeltme kayıtları geri alınmaz; elle düzenlemenin etkisi yeni bir düzenlemeyle değiştirilir. Kalan borcu negatife düşürecek geri alma yapılmaz.
   - **Elle düzenleme** (FR-KAZ-01): Kullanıcı bir kalemin borcunu yeni bir sayıya ayarlar. O kalemde hiç kayıt yoksa *elle* kaydı, varsa aradaki fark kadar *düzeltme* kaydı yazılır. Negatif sayı kabul edilmez.
+- **DATA-05 Günlük kaydın durumu.** PrayerRecord yalnızca kullanıcının işaretini saklar. Kurallar:
+  - **Durum türetilir**, şu öncelikle: işaretliyse *kılındı*; işaretli değil ve kalem bir mazeret dönemindeyse *mazeretli* (BR-10, BR-11; mazeret kartlarında uygulanır); işaretli değil ve vaktin "kaçırıldı" anı (BR-04) geçtiyse *kılınmadı*; aksi hâlde *belirsiz*.
+  - **Geri alma** (FR-TRK-03): İşaret silinir, kalem *belirsiz*e ya da vakti çıktıysa *kılınmadı*ya döner. Vitir işaretliyken yatsının işareti geri alınmaz; önce vitrinki geri alınır (BR-03).
+  - **Cuma işareti** (BR-08, FR-TRK-06): Yalnızca cuma gününün öğle kalemine ve öğlenin vakti içinde konur; erkekte ve kadında aynı kayıttır. Cuma kılınmazsa kalem öğledir ve öneri öğle için çıkar.
+  - **Kaçırıldı önerisi saklanmaz, türetilir** (FR-KAZ-03): Bir kalem için öneri, kalem *kılınmadı* ise, "kaçırıldı" anı takip başlangıcından sonraysa (FR-ONB-05) ve o tarih ve kalem için geri alınmamış bir *öneri* ya da *otomatik* KazaEntry yoksa bekler. Otomatik ekleme açıksa öneri yerine *otomatik* kaydı yazılır. "Borca ekle" onayı bir *öneri* kaydı yazar.
 
 ### 6.2 Dış arayüzler
 
@@ -341,6 +346,7 @@ Gereksinimlerden şaşmamanın yolu değişikliği yasaklamak değil, her deği�
 | 1.0-taslak.8 | 28 Ekim 2026 | **İkinci hoca görüşmesi:** 1.0-taslak.7'de türetilen beş nokta soruldu (E1 – E5, fikhi-gereksinimler.md). BR-14: 240 saati aşan dönem alışkanlığı 10 gün yapar (önceki "değiştirmez" varsayımı yanlıştı); ilk dönemin alışkanlığı belirlemesi onaylandı. BR-16: birleşik dönem 240 saati aşınca BR-14'ün tüm döneme uygulanması, hocanın uygulamaya bıraktığı karar olarak kesinleşti. BR-19: bulûğ yaşı bilinmiyorsa erkekte de 14 kamerî yaş. BR-15: nifasın 960 saati içinde yeniden başlayan kanama nifasın devamı, aradaki temizlik nifastır. FR-MAZ-05, FR-MAZ-06, FR-KAZ-08 ve sözlük güncellendi. Yeni FR ya da P0 yok. Karar tablosu v1.5 (101 senaryo), kabul senaryoları 99 senaryo. Bölüm 10'daki teyit maddesi kapandı |
 | 1.0-taslak.9 | 30 Ekim 2026 | **Belge tutarlılığı.** Talep: CLAUDE.md hazırlanırken belgeler arasında çelişki bulundu. Sınıf: NFR (kapsam daraltma). Etki: NFR-MNT-03 kaldırıldı; 29 Ekim 2026'da ADR yazılmaması kararlaştırılmıştı (yol haritası Faz 1), kararlar proje belgelerinde durur. Hiçbir BR, FR ya da test değişmedi. Referanslara mimari-ve-kodlama-ilkeleri.md ve CLAUDE.md eklendi. Bölüm 10'da Diyanet başvurusunun durumu güncellendi. Aynı gün yol haritası ve özellik listesindeki eski ifadeler (asr-ı sânî, kerahat ayarı, baygınlık eşiği, Faz 0 durumu, Faz 2 varlıkları) bu belgeyle uyumlu hale getirildi |
 | 1.0-taslak.10 | 2 Kasım 2026 | **Kaza defterinin veri modeli.** Talep: Faz 2 kartı F2-03 (kaza defteri) yazılırken KS-ONB-04, KS-KAZ-01, 07, 08 ve 09'un gerektirdiği alanların veri sözlüğünde olmadığı görüldü: kayıt adedi, onaylanmış önerinin türü ve geri alınan kaydın kimliği. Sınıf: veri modeli (FR değişmedi, BR değişmedi; hoca kontrolü gerekmez). Etki: KazaEntry'ye kimlik, "öneri" türü, adet ve düzelttiği kayıt; KazaPerformed'a kimlik eklendi. DATA-04 (kaza defteri kuralları: tür anlamları, adet, kalan borç, geri alma, elle düzenleme) eklendi. Henüz veritabanı yok (Faz 4); geçiş gerekmez. Birlikte yazılan ve birlikte geri alınan kayıtlar (FR-TRK-04, KS-KAZ-10) için işlem kimliği F2-04'te eklenecek |
+| 1.0-taslak.11 | 2 Kasım 2026 | **Günlük kaydın durumu.** Talep: Faz 2 kartı F2-04 (günlük işaretleme) yazılırken PrayerRecord'un hangi durumu sakladığı ve hangisini türettiği, kaçırıldı önerisinin saklanıp saklanmadığı ve kurulum anının nerede tutulduğu tanımsız bulundu. Sınıf: veri modeli (FR ve BR değişmedi; hoca kontrolü gerekmez). Etki: 6.1'de PrayerRecord alanları netleşti, Settings'e takip başlangıcı eklendi; DATA-05 (durumun türetilmesi, önerinin türetilmesi, cuma işareti, yatsı–vitir geri alma sırası) eklendi. Henüz veritabanı yok (Faz 4); geçiş gerekmez |
 
 ## 10. Açık konular
 
