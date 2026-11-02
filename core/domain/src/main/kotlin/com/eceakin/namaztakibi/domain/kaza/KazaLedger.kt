@@ -122,6 +122,9 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
         if (entry == null) {
             val performedRecord = performed.firstOrNull { it.id == id }
                 ?: return UndoDecision.Blocked(UndoBlock.NOT_FOUND)
+            if (performedRecord.operationId != null) {
+                return UndoDecision.Blocked(UndoBlock.PART_OF_OPERATION)
+            }
             if (isCorrected(id)) {
                 return UndoDecision.Blocked(UndoBlock.ALREADY_CORRECTED)
             }
@@ -138,6 +141,9 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
             )
         }
 
+        if (entry.operationId != null) {
+            return UndoDecision.Blocked(UndoBlock.PART_OF_OPERATION)
+        }
         if (entry.kind == KazaEntryKind.DUZELTME) {
             return UndoDecision.Blocked(UndoBlock.CORRECTION_NOT_UNDOABLE)
         }

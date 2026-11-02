@@ -16,6 +16,7 @@ sealed interface UndoDecision {
 /** Geri alma engelinin nedeni. */
 enum class UndoBlock {
     NOT_FOUND,
+    PART_OF_OPERATION,
     ALREADY_CORRECTED,
     CORRECTION_NOT_UNDOABLE,
     WOULD_GO_NEGATIVE
