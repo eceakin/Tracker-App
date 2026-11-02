@@ -31,7 +31,7 @@ object LateMarkFixture {
         decision: OperationUndoDecision.Allowed
     ): Pair<DayRecord, KazaLedger> {
         val newRecord = DayRecordFixture.apply(record, listOf(decision.clear), null)
-        val newLedger = LedgerFixture.apply(ledger, decision.kazaWrites, null)
+        val newLedger = LedgerFixture.applyAtomically(ledger, decision.kazaWrites, null)
         return newRecord to newLedger
     }
 }
