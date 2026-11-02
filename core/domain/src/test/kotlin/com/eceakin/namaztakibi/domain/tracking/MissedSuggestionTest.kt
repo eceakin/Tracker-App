@@ -370,6 +370,18 @@ class MissedSuggestionTest {
                 "DATA-05 elle kayit sayilmaz",
                 ledgerOf(entry("e1", KazaEntryKind.ELLE, null)),
                 listOf(MissedOutcome.Suggest(ReferenceDay.date(1), Prayer.OGLE))
+            ),
+            Arguments.argumentSet(
+                "DATA-05 baska kalemin kaydi",
+                ledgerOf(
+                    entry(
+                        "e1",
+                        KazaEntryKind.ONERI,
+                        ReferenceDay.date(1),
+                        prayer = Prayer.IKINDI
+                    )
+                ),
+                listOf(MissedOutcome.Suggest(ReferenceDay.date(1), Prayer.OGLE))
             )
         )
 
@@ -383,10 +395,11 @@ class MissedSuggestionTest {
             kind: KazaEntryKind,
             sourceDate: LocalDate?,
             count: Int = 1,
-            corrects: KazaRecordId? = null
+            corrects: KazaRecordId? = null,
+            prayer: Prayer = Prayer.OGLE
         ): KazaEntry = KazaEntry(
             id = KazaRecordId(id),
-            prayer = Prayer.OGLE,
+            prayer = prayer,
             sourceDate = sourceDate,
             kind = kind,
             count = count,

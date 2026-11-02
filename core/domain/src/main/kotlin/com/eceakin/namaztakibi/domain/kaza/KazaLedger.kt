@@ -197,7 +197,11 @@ data class KazaLedger(val entries: List<KazaEntry>, val performed: List<KazaPerf
      *
      * `ELLE`, `HESAPLAYICI` ve `DUZELTME` kayıtları öneriyi kapatmaz.
      */
-    fun hasOpenEntryFor(date: LocalDate, prayer: Prayer): Boolean = entries.any { entry ->
+    fun hasOpenEntryFor(date: LocalDate, prayer: Prayer): Boolean =
+        openEntriesFor(date, prayer).isNotEmpty()
+
+    /** Bu tarih ve kalem için geri alınmamış `ONERI`/`OTOMATIK` kayıtları (DATA-05). */
+    fun openEntriesFor(date: LocalDate, prayer: Prayer): List<KazaEntry> = entries.filter { entry ->
         val hasOpenKind = entry.kind == KazaEntryKind.ONERI ||
             entry.kind == KazaEntryKind.OTOMATIK
         hasOpenKind &&

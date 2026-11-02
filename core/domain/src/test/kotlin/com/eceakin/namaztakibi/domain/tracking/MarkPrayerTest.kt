@@ -402,6 +402,21 @@ class MarkPrayerTest {
                 }
             ),
             Arguments.argumentSet(
+                "FR-TRK-03 vitir bosken yatsi geri alinir",
+                Executable {
+                    val record = DayRecord(
+                        date = ReferenceDay.date(1),
+                        marks = listOf(cm(Prayer.YATSI, "19:45"))
+                    )
+                    assertEquals(
+                        UnmarkDecision.Allowed(
+                            RecordWrite.Clear(ReferenceDay.date(1), Prayer.YATSI)
+                        ),
+                        record.decideUnmark(Prayer.YATSI)
+                    )
+                }
+            ),
+            Arguments.argumentSet(
                 "FR-TRK-03 kaza isareti",
                 Executable {
                     val record = DayRecord(

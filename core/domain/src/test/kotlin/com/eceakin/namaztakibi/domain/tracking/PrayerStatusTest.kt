@@ -115,6 +115,18 @@ class PrayerStatusTest {
                         ReferenceDay.clockAt(2, "13:00")
                     )
                 }
+            ),
+            Arguments.argumentSet(
+                "M-24 decideLateMark yanlis gun",
+                Executable {
+                    DayRecord.empty(ReferenceDay.date(1)).decideLateMark(
+                        Prayer.OGLE,
+                        LateChoice.ON_TIME,
+                        PrayerDayWindows(ReferenceDay.times(2), ReferenceDay.times(3)),
+                        KazaLedger.EMPTY,
+                        ReferenceDay.clockAt(2, "13:00")
+                    )
+                }
             )
         )
 

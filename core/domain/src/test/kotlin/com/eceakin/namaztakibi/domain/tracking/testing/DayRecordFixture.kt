@@ -1,6 +1,7 @@
 package com.eceakin.namaztakibi.domain.tracking.testing
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.kaza.OperationId
 import com.eceakin.namaztakibi.domain.times.PrayerDayWindows
 import com.eceakin.namaztakibi.domain.tracking.DayRecord
 import com.eceakin.namaztakibi.domain.tracking.PrayerMark
@@ -14,7 +15,11 @@ import java.time.LocalDate
  * değişmezleri her adımda denetlenir.
  */
 object DayRecordFixture {
-    fun apply(record: DayRecord, writes: List<RecordWrite>): DayRecord {
+    fun apply(
+        record: DayRecord,
+        writes: List<RecordWrite>,
+        operationId: OperationId? = null
+    ): DayRecord {
         var current = record
         writes.forEach { write ->
             current = when (write) {
@@ -28,7 +33,8 @@ object DayRecordFixture {
                                 prayer = write.prayer,
                                 markedAt = write.markedAt,
                                 asCuma = write.asCuma,
-                                asKaza = write.asKaza
+                                asKaza = write.asKaza,
+                                operationId = operationId
                             )
                     )
                 }

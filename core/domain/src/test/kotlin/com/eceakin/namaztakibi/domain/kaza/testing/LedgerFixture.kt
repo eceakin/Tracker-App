@@ -5,6 +5,7 @@ import com.eceakin.namaztakibi.domain.kaza.KazaLedger
 import com.eceakin.namaztakibi.domain.kaza.KazaPerformed
 import com.eceakin.namaztakibi.domain.kaza.KazaRecordId
 import com.eceakin.namaztakibi.domain.kaza.KazaWrite
+import com.eceakin.namaztakibi.domain.kaza.OperationId
 
 /**
  * Kaza defterinin bellek içi test karşılığı (K-14).
@@ -13,7 +14,11 @@ import com.eceakin.namaztakibi.domain.kaza.KazaWrite
  * değişmezleri her adımda denetlenir. Kimlikleri `w1`, `w2`, … diye üretir.
  */
 object LedgerFixture {
-    fun apply(ledger: KazaLedger, writes: List<KazaWrite>): KazaLedger {
+    fun apply(
+        ledger: KazaLedger,
+        writes: List<KazaWrite>,
+        operationId: OperationId? = null
+    ): KazaLedger {
         var current = ledger
         writes.forEach { write ->
             val id = nextId(current)
@@ -27,7 +32,8 @@ object LedgerFixture {
                         count = write.count,
                         corrects = write.corrects,
                         missedInSefer = write.missedInSefer,
-                        createdAt = write.createdAt
+                        createdAt = write.createdAt,
+                        operationId = operationId
                     )
                 )
 
@@ -35,7 +41,8 @@ object LedgerFixture {
                     performed = current.performed + KazaPerformed(
                         id = id,
                         prayer = write.prayer,
-                        performedAt = write.performedAt
+                        performedAt = write.performedAt,
+                        operationId = operationId
                     )
                 )
             }
