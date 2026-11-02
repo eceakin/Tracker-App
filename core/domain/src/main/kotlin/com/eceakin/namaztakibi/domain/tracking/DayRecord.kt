@@ -1,6 +1,8 @@
 package com.eceakin.namaztakibi.domain.tracking
 
 import com.eceakin.namaztakibi.domain.Prayer
+import com.eceakin.namaztakibi.domain.times.PrayerDayWindows
+import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -40,6 +42,27 @@ data class DayRecord(val date: LocalDate, val marks: List<PrayerMark>) {
 
     /** Kalemin işareti; yoksa `null`. */
     fun markOf(prayer: Prayer): PrayerMark? = marks.firstOrNull { it.prayer == prayer }
+
+    /**
+     * Kalemin türetilmiş durumu (DATA-05, BR-04).
+     *
+     * İşaretli kalem her durumda kılındı sayılır. İşaretsiz kalem, "kaçırıldı" anı
+     * geçtiyse kılınmadı, aksi hâlde belirsizdir. Mazeretli durumunu mazeret kartları
+     * (F2-07) üretecek.
+     */
+    fun statusOf(prayer: Prayer, windows: PrayerDayWindows, clock: Clock): PrayerStatus {
+        require(windows.day.date == date) {
+            "Vakitler bu gün kaydına ait olmalı"
+        }
+        if (markOf(prayer) != null) {
+            return PrayerStatus.KILINDI
+        }
+        return if (clock.instant() >= windows.missedAt(prayer)) {
+            PrayerStatus.KILINMADI
+        } else {
+            PrayerStatus.BELIRSIZ
+        }
+    }
 
     companion object {
         /** İşaretsiz gün kaydı. */
