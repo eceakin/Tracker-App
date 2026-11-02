@@ -2,7 +2,7 @@
 
 Bu dosya, bu depoda kod yazan yapay zekâ ajanı için bağlayıcı çalışma talimatıdır. Her oturumun başında baştan sona oku. Buradaki bir kuralla çelişen bir istek gelirse işe başlamadan önce çelişkiyi kullanıcıya bildir.
 
-Sürüm 1.7 · 2 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.7)
+Sürüm 1.8 · 2 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.10, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.7)
 
 ## 0. Oturum başında
 
@@ -51,7 +51,7 @@ Belgeler `docs/` altındadır. Hepsini her oturumda okuma; görevin gerektirdiğ
 
 ## 4. Mevcut durum
 
-- **Faz:** Faz 2 (domain modeli ve kural motoru, TDD). Kartlar F2-01 – F2-13; liste ve sıra `docs/gelistirme-yol-haritasi.md` Faz 2'de. Her kart karar tablosunun belirli satırlarını kapsar. F2-01 tamamlandı (`RuleSet.HANEFI`, `PrayerTimesDay`, `ReferenceDay`, kapsam ve KT kapıları).
+- **Faz:** Faz 2 (domain modeli ve kural motoru, TDD). Kartlar F2-01 – F2-13; liste ve sıra `docs/gelistirme-yol-haritasi.md` Faz 2'de. Her kart karar tablosunun belirli satırlarını kapsar. F2-01 (`RuleSet.HANEFI`, `PrayerTimesDay`, `ReferenceDay`, kapsam ve KT kapıları) ve F2-02 (`domain.times`: vakit aralıkları, şu anki vakit, kerahat pencereleri, namaz günü) tamamlandı.
 - **Faz 1:** F1-01 – F1-04 tamamlandı. F1-05 (widget ve hatırlatma risk prototipi, spike) Faz 2 ile paralel yürür; spike kodu `main`'e girmez (Bölüm 10 "Spike kartları"). Faz 2 kartlarında spike dalındaki koda dokunma.
 - **Diyanet API'si:** Başvuru yapıldı, yanıt bekleniyor. Vakit kaynağı bir arayüzün arkasında olduğu için iş beklemez. Gerçek Diyanet istemcisi yazma; sahte (fake) uygulama kullan.
 - **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme. Kural motoru metin değil tipli sonuç döndürür (Bölüm 7, M-25).
@@ -111,6 +111,7 @@ Tam liste `docs/mimari-ve-kodlama-ilkeleri.md`'de. Aşağıdakiler pazarlıksız
 - Room tek doğruluk kaynağıdır (M-30).
 - Kaza borcu bir sayaç değil, **append-only kayıtlardır**. Kalan borç satırlardan hesaplanır, kayıt silinmez; geri alma bir "düzeltme" kaydıdır (M-31, FR-KAZ-05).
 - Borç asla negatif olamaz (FR-KAZ-04).
+- Kaza defterinin kuralları (tür anlamları, adet, geri alma, elle düzenleme) SRS DATA-04'tedir.
 - `fallbackToDestructiveMigration` **asla** kullanılmaz. `exportSchema = true` ve şema dosyaları depoya girer (M-33).
 - Mazeret verisi ayrı veritabanı dosyasındadır ve otomatik yedeğe girmez (M-34).
 - Tüm yazmalar transaction içindedir (NFR-REL-02).
@@ -161,6 +162,7 @@ Bu uygulamada fıkhi bir hata, kullanıcının ibadetini etkiler. Bu yüzden:
 **Git**
 - `main`'e doğrudan commit atılmaz. Her görev ayrı ve kısa ömürlü bir dalda yapılır: `feat/<kısa-ad>`, `fix/<kısa-ad>`, `test/<kısa-ad>`, `chore/<kısa-ad>`.
 - Commit mesajları İngilizce ve Conventional Commits biçimindedir, örneğin `feat(domain): add kerahat window check (BR-07)`. Küçük ve anlamlı commit'ler at.
+- **Belge commit'i yalnızca belge içerir.** `docs:` ve `docs(tasks):` commit'lerine kod, test ya da derleme dosyası girmez; plan ya da rapor yazarken fark ettiğin bir kod düzeltmesi kendi commit'inde (`fix:`, `refactor:`, `style:`) yapılır ve rapora yazılır.
 - Dosyaları commit'e **adıyla** ekle (`git add <yol>`). `git add -A`, `git add .` ve `git commit -a` kullanma; çalışma ağacında başka bir kartın dosyaları bulunabilir.
 - Birleştirme GitHub'da Pull Request ile ve "Squash and merge" yöntemiyle yapılır. `push` ve PR açma işini kullanıcı istemedikçe yapma.
 - `git stash`, `git commit --amend`, `git reset --hard`, `git push --force` ve `main`'e dokunan her işlem yasak; gerekiyorsa dur ve sor.

@@ -1,6 +1,6 @@
 # Gereksinim Analizi Raporu (SRS) — Namaz & Kaza Takip v1.0
 
-26 Ekim 2026 · @ece · Son güncelleme: 30 Ekim 2026 (1.0-taslak.9, ADR gereksinimi kaldırıldı)
+26 Ekim 2026 · @ece · Son güncelleme: 2 Kasım 2026 (1.0-taslak.10, kaza defterinin veri modeli)
 
 ## Özet
 
@@ -253,8 +253,8 @@ Rakibin en ağır şikayetleri fonksiyondan değil güvenilirlikten geldiği iç
 | Varlık | Temel alanlar | Saklama yeri | Otomatik yedek |
 | --- | --- | --- | --- |
 | PrayerRecord | tarih, kalem (6), durum (kılındı / kılınmadı / mazeretli / belirsiz), işaretlenme anı, cuma mı, kaza olarak mı kılındı | Ana veritabanı | Evet |
-| KazaEntry | kalem, kaynak tarih, tür (elle / otomatik / hesaplayıcı / düzeltme), seferde kaçtı mı, oluşturulma anı | Ana veritabanı | Evet |
-| KazaPerformed | kalem, kılınma anı | Ana veritabanı | Evet |
+| KazaEntry | kimlik, kalem, kaynak tarih (biliniyorsa), tür (elle / öneri / otomatik / hesaplayıcı / düzeltme), adet, düzelttiği kayıt (yalnızca geri alma düzeltmesinde), seferde kaçtı mı, oluşturulma anı | Ana veritabanı | Evet |
+| KazaPerformed | kimlik, kalem, kılınma anı | Ana veritabanı | Evet |
 | MazeretPeriod | tür (hayız / nifas), başlangıç anı, bitiş anı, kanama aralıkları (ara temizliği olan dönemde birden çok), uyarılı mı | Hassas veritabanı | Hayır |
 | PrayerTimesDay | ilçe, tarih, 6 vakit, kaynak (Diyanet / tahmini) | Önbellek tablosu | Hayır (yeniden indirilir) |
 | Settings | ilçe, cinsiyet, gusül süresi, hatırlatma ayarları, otomatik ekleme, âdet alışkanlığı ve son güncellenme kaynağı (elle / dönem) | DataStore | Evet (âdet alışkanlığı hariç) |
@@ -263,6 +263,13 @@ Rakibin en ağır şikayetleri fonksiyondan değil güvenilirlikten geldiği iç
 - **DATA-01** Veri süresiz ve yalnızca cihazda tutulur.
 - **DATA-02** Kullanıcı ayarlardan tüm verisini silebilir; silmeden önce dışa aktarma önerilir ve iki adımlı onay istenir.
 - **DATA-03** Zamanlar `Instant` olarak, gösterim ilçenin saat dilimiyle yapılır.
+- **DATA-04 Kaza defteri.** Kaza borcu bir sayaç değil, KazaEntry ve KazaPerformed kayıtlarından oluşan bir defterdir (FR-KAZ-05, NFR-REL-02). Kurallar:
+  - **Kimlik:** Her kayıt oluşturulurken benzersiz bir kimlik alır; kimlik iki tabloda ortaktır, böylece bir düzeltme her iki türden kayda işaret edebilir.
+  - **Tür:** *elle* = kullanıcının doğrudan girdiği borç (başlangıç borcu, KS-ONB-04; "önce ekleyip sonra düşeyim" onayı, KS-KAZ-07). *öneri* = kullanıcının onayladığı kaçırıldı önerisi (KS-KAZ-04, 08, 09). *otomatik* = otomatik ekleme ayarıyla yazılan borç (KS-KAZ-06). *hesaplayıcı* = borç hesaplayıcının sonucu (FR-KAZ-08). *düzeltme* = borcu elle düzenleme ya da bir kaydı geri alma.
+  - **Adet:** Bir kaydın borca etkisidir. Düzeltme dışındaki türlerde pozitif tam sayıdır (başlangıç borcu kalem başına tek kayıttır, ör. öğle 8). Düzeltmede sıfırdan farklı, işaretli tam sayıdır (KS-KAZ-01: "düzeltme +2").
+  - **Kalan borç** (kalem başına) = o kalemin KazaEntry adetlerinin toplamı − o kalemin KazaPerformed sayısı. Hiçbir zaman negatif olmaz (FR-KAZ-04).
+  - **Geri alma** (FR-KAZ-05): Kayıt silinmez; karşı etkili bir düzeltme kaydı eklenir ve geri alınan kayda işaret eder. KazaEntry geri alınırsa düzeltmenin adedi kaydın adedinin eksi işaretlisidir; KazaPerformed geri alınırsa +1'dir. Bir kayıt yalnızca bir kez geri alınır. Düzeltme kayıtları geri alınmaz; elle düzenlemenin etkisi yeni bir düzenlemeyle değiştirilir. Kalan borcu negatife düşürecek geri alma yapılmaz.
+  - **Elle düzenleme** (FR-KAZ-01): Kullanıcı bir kalemin borcunu yeni bir sayıya ayarlar. O kalemde hiç kayıt yoksa *elle* kaydı, varsa aradaki fark kadar *düzeltme* kaydı yazılır. Negatif sayı kabul edilmez.
 
 ### 6.2 Dış arayüzler
 
@@ -333,6 +340,7 @@ Gereksinimlerden şaşmamanın yolu değişikliği yasaklamak değil, her deği�
 | 1.0-taslak.7 | 28 Ekim 2026 | **Hoca görüşü işlendi** (talep: hocaya-sorular.md; cevaplar fikhi-gereksinimler.md "Hoca görüşü kaydı"). Kuralların çoğu olduğu gibi onaylandı; kaynak sütunlarına "Hoca (n.n)" atfı eklendi. **BR değişiklikleri (hoca onaylı):** BR-06 kaldırıldı (asr-ı sânî gösterilmez). BR-07: kerahat 50/45/50 → 45/45/45 dk, vitir kazası açıkça dahil, kullanıcı ayarı değil. BR-12: gusül aralığı 5–60 → 5–30 dk. BR-14: alışkanlık art arda iki dönemde değil, tek dönemde güncellenir; 240 saati aşan dönem alışkanlığı değiştirmez. BR-16: 240 saat içinde yeniden başlayan kanama önceki dönemle birleşir, aradaki temizlik hayızdır; 240 saatten sonra ve 15 gün dolmadan başlayan kanama istihâzedir. BR-17: yalnız vitir borcunda not yok; borç 6'nın altına inince tertip geri döner. BR-19: bulûğ yaşı bilinmiyorsa tahmin, yoksa kızda 14 kamerî yaş. BR-20: emin olunmayan günler borca katılır; Müslüman olma tarihi. BR-11, BR-13, BR-15, BR-22: hocanın netleştirdiği ayrıntılar eklendi (vaktin sonu, hamilelik, lohusalık alışkanlığı yok, narkoz). BR-00: alışkanlık güncellemesi istisnası. **FR değişiklikleri:** FR-VKT-05 kaldırıldı (P1); FR-AYR-03 kaldırıldı (P1, kapsamı daraltıyor); FR-KAZ-10 niyet hatırlatması eklendi (P1). FR-MAZ-05, FR-MAZ-06, FR-KAZ-06 – 08, FR-AYR-01, FR-VKT-04, FR-MAZ-03 kabul kriterleri güncellendi. **NFR:** NFR-SEC-03 (alışkanlık güncellemesi bildirimle duyurulmaz), NFR-USA-03 (danışma yönlendirmesi yok, Diyanet fetvası kaynak gösterilebilir). **Veri:** MazeretPeriod'a kanama aralıkları ve uyarılı alanı, Settings'e alışkanlığın güncellenme kaynağı eklendi; kerahat dakikaları Settings'ten çıktı. Bölüm 7'ye beş kapsam dışı madde eklendi. Yeni P0 yok; FR sayısı 50 (43 P0, 7 P1). Karar tablosu v1.4'e, kabul senaryoları 98 senaryoya güncellendi. Bölüm 10'da hoca kontrolü kapandı; türetilmiş noktaların teyidi ve ekran taslaklarına yansıtma açık konu olarak eklendi |
 | 1.0-taslak.8 | 28 Ekim 2026 | **İkinci hoca görüşmesi:** 1.0-taslak.7'de türetilen beş nokta soruldu (E1 – E5, fikhi-gereksinimler.md). BR-14: 240 saati aşan dönem alışkanlığı 10 gün yapar (önceki "değiştirmez" varsayımı yanlıştı); ilk dönemin alışkanlığı belirlemesi onaylandı. BR-16: birleşik dönem 240 saati aşınca BR-14'ün tüm döneme uygulanması, hocanın uygulamaya bıraktığı karar olarak kesinleşti. BR-19: bulûğ yaşı bilinmiyorsa erkekte de 14 kamerî yaş. BR-15: nifasın 960 saati içinde yeniden başlayan kanama nifasın devamı, aradaki temizlik nifastır. FR-MAZ-05, FR-MAZ-06, FR-KAZ-08 ve sözlük güncellendi. Yeni FR ya da P0 yok. Karar tablosu v1.5 (101 senaryo), kabul senaryoları 99 senaryo. Bölüm 10'daki teyit maddesi kapandı |
 | 1.0-taslak.9 | 30 Ekim 2026 | **Belge tutarlılığı.** Talep: CLAUDE.md hazırlanırken belgeler arasında çelişki bulundu. Sınıf: NFR (kapsam daraltma). Etki: NFR-MNT-03 kaldırıldı; 29 Ekim 2026'da ADR yazılmaması kararlaştırılmıştı (yol haritası Faz 1), kararlar proje belgelerinde durur. Hiçbir BR, FR ya da test değişmedi. Referanslara mimari-ve-kodlama-ilkeleri.md ve CLAUDE.md eklendi. Bölüm 10'da Diyanet başvurusunun durumu güncellendi. Aynı gün yol haritası ve özellik listesindeki eski ifadeler (asr-ı sânî, kerahat ayarı, baygınlık eşiği, Faz 0 durumu, Faz 2 varlıkları) bu belgeyle uyumlu hale getirildi |
+| 1.0-taslak.10 | 2 Kasım 2026 | **Kaza defterinin veri modeli.** Talep: Faz 2 kartı F2-03 (kaza defteri) yazılırken KS-ONB-04, KS-KAZ-01, 07, 08 ve 09'un gerektirdiği alanların veri sözlüğünde olmadığı görüldü: kayıt adedi, onaylanmış önerinin türü ve geri alınan kaydın kimliği. Sınıf: veri modeli (FR değişmedi, BR değişmedi; hoca kontrolü gerekmez). Etki: KazaEntry'ye kimlik, "öneri" türü, adet ve düzelttiği kayıt; KazaPerformed'a kimlik eklendi. DATA-04 (kaza defteri kuralları: tür anlamları, adet, kalan borç, geri alma, elle düzenleme) eklendi. Henüz veritabanı yok (Faz 4); geçiş gerekmez. Birlikte yazılan ve birlikte geri alınan kayıtlar (FR-TRK-04, KS-KAZ-10) için işlem kimliği F2-04'te eklenecek |
 
 ## 10. Açık konular
 

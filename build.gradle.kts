@@ -225,10 +225,6 @@ gradle.projectsEvaluated {
 // K-16 — bekleyen KT listesi. Bir Faz 2 kartı kapsadığı kimlikleri buradan siler.
 // Listeye kimlik eklemek ya da kartın söylemediği bir kimliği silmek planlama kararıdır.
 val ktPending: Set<String> = setOf(
-    // F2-03
-    "KT-35",
-    "KT-36",
-    "KT-81",
     // F2-04
     "KT-01",
     "KT-02",
