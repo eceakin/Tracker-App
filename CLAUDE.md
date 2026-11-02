@@ -2,7 +2,7 @@
 
 Bu dosya, bu depoda kod yazan yapay zekâ ajanı için bağlayıcı çalışma talimatıdır. Her oturumun başında baştan sona oku. Buradaki bir kuralla çelişen bir istek gelirse işe başlamadan önce çelişkiyi kullanıcıya bildir.
 
-Sürüm 1.6 · 2 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.6)
+Sürüm 1.7 · 2 Kasım 2026 · Kaynak: `docs/` altındaki proje belgeleri (SRS 1.0-taslak.9, karar tablosu v1.5, kabul senaryoları 99 senaryo, mimari ilkeler 1.7)
 
 ## 0. Oturum başında
 
@@ -51,7 +51,7 @@ Belgeler `docs/` altındadır. Hepsini her oturumda okuma; görevin gerektirdiğ
 
 ## 4. Mevcut durum
 
-- **Faz:** Faz 2 (domain modeli ve kural motoru, TDD). Kartlar F2-01 – F2-13; liste ve sıra `docs/gelistirme-yol-haritasi.md` Faz 2'de. Her kart karar tablosunun belirli satırlarını kapsar.
+- **Faz:** Faz 2 (domain modeli ve kural motoru, TDD). Kartlar F2-01 – F2-13; liste ve sıra `docs/gelistirme-yol-haritasi.md` Faz 2'de. Her kart karar tablosunun belirli satırlarını kapsar. F2-01 tamamlandı (`RuleSet.HANEFI`, `PrayerTimesDay`, `ReferenceDay`, kapsam ve KT kapıları).
 - **Faz 1:** F1-01 – F1-04 tamamlandı. F1-05 (widget ve hatırlatma risk prototipi, spike) Faz 2 ile paralel yürür; spike kodu `main`'e girmez (Bölüm 10 "Spike kartları"). Faz 2 kartlarında spike dalındaki koda dokunma.
 - **Diyanet API'si:** Başvuru yapıldı, yanıt bekleniyor. Vakit kaynağı bir arayüzün arkasında olduğu için iş beklemez. Gerçek Diyanet istemcisi yazma; sahte (fake) uygulama kullan.
 - **Ekran metinleri:** Fıkhi ekran metinleri hoca kontrolünden geçmedi. Faz 5'e kadar `strings.xml`'e fıkhi açıklama metni ekleme. Kural motoru metin değil tipli sonuç döndürür (Bölüm 7, M-25).
@@ -95,6 +95,8 @@ Tam liste `docs/mimari-ve-kodlama-ilkeleri.md`'de. Aşağıdakiler pazarlıksız
 **Zaman**
 - Domain'de `LocalDateTime.now()`, `Instant.now()`, `System.currentTimeMillis()` ve `ZoneId.systemDefault()` yasak. Zamana bağlı her fonksiyon `java.time.Clock` alır (M-23).
 - Anlar `Instant` + `ZoneId` ile tutulur. Hassasiyet dakikadır.
+- **Saat dilimi ilçenindir, saatin değil (M-23, DATA-03).** Takvim günü gerektiren bir fonksiyon (namaz günü gibi) ilçenin `ZoneId`'sini ayrı bir parametre olarak alır. `Clock` yalnızca "şu an" (`clock.instant()`) için kullanılır; `clock.zone` kural hesabında kullanılmaz.
+- Vakit sınırları tam dakikadadır; saniyeli bir an (ör. 15:29:59) sınırın hangi tarafında olduğuna göre değerlendirilir, ayrıca yuvarlanmaz.
 - Aralıklar **başlangıç dahil, bitiş hariç**: `[başlangıç, bitiş)`.
 - **Namaz günü imsakta başlar.** Gece yarısından imsaka kadar önceki namaz günü geçerlidir.
 
@@ -213,7 +215,10 @@ Karşılanan kimlikler: <BR-xx, KT-xx, KS-xx, FR-xx>
 Varsayımlar: <kartta yazmayan ve senin seçtiğin her şey>
 Belge tutarsızlıkları: <bulduysan>
 Açık sorular: <varsa>
+PR başlığı: <tür>(<kapsam>): <açıklama> (<KART-KİMLİĞİ>)
 ```
+
+- **PR başlığı:** Raporun son satırı, kullanıcının PR'a ve "Squash and merge" penceresine yapıştıracağı başlıktır. Conventional Commits biçiminde, İngilizce, kart kimliğiyle biter; ör. `feat(domain): add prayer time windows (F2-02)`. Squash commit'i `main`'e bu başlıkla girer.
 
 ## 12. Dur ve sor (bunlardan biri olursa kodu yazmadan önce sor)
 
